@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <string>
+#include <stdlib.h>
 
 
 #define GRINBOX_MAIN_ICON 101
@@ -16,8 +17,8 @@
 #define GRINBOX_RESET_BUTTON 213
 #define GRINBOX_EXIT_BUTTON 214
 #define GRINBOX_SAVE 217
-#define LABEL_X 215
-#define LABEL_Y 216
+#define TEXTBOX_FRAMESIZE 215
+
 
 #define GRINBOX_ID_TIMER_GET_FRAME 501
 
@@ -37,6 +38,6 @@
 
 #define ID_MASK_OFF 109
 #define ID_MASK_3 110
-#define ID_MASK_5 111
+
 
 #endif

@@ -6,7 +6,7 @@ HINSTANCE hInst;
 videoInput VI;
 unsigned char *g_pRGBOriginalSample;
 unsigned char *g_pRGBProcesedSample;
-unsigned char *g_last;
+unsigned char *g_last;			
 unsigned char *g_temp;
 
 
@@ -32,10 +32,12 @@ bool filtered;
 int maskSize=0;		
 int mask=1;
 
+
 int mouseX;
 int mouseY;
 
 void DrawSq(int iWidth, int iHeight);
+void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample );
 
 void xEndCalibrate()
 {
@@ -299,10 +301,7 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
       pRGBDsrSample[(y*iWidth+x)*3+0] = pRGBSrcSample[(y*iWidth+x)*3+0]; //Przepisanie s³adowej B
       pRGBDsrSample[(y*iWidth+x)*3+1] = pRGBSrcSample[(y*iWidth+x)*3+1]; //Przepisanie s³adowej G
       pRGBDsrSample[(y*iWidth+x)*3+2] = pRGBSrcSample[(y*iWidth+x)*3+2]; //Przepisanie s³adowej R
-	  //g_temp=pRGBDsrSample;
-/*
-	  
-*/
+
 	}
   }
 
@@ -311,61 +310,26 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 		for(int j=0; j<iWidth;j++)
 		{
 
-			g_temp[(i*iWidth+j)*3+0]= pRGBDsrSample[(i*iWidth+j)*3+0];
-			g_temp[(i*iWidth+j)*3+1]= pRGBDsrSample[(i*iWidth+j)*3+1];
-			g_temp[(i*iWidth+j)*3+2]= pRGBDsrSample[(i*iWidth+j)*3+2];
+				g_last[(i*iWidth+j)*3+0] = pRGBDsrSample[(i*iWidth+j)*3+0];
+				g_last[(i*iWidth+j)*3+1] = pRGBDsrSample[(i*iWidth+j)*3+1];
+				g_last[(i*iWidth+j)*3+2] = pRGBDsrSample[(i*iWidth+j)*3+2];
 
-			//mask
+
+			//maska
 			if(maskSize && i>maskSize && j>maskSize && j<iWidth-maskSize && i<iHeight-maskSize)
-			{
-				g_temp[(i*iWidth+j)*3+0]=g_temp[(i*iWidth+j)*3+0]/mask;
-				g_temp[(i*iWidth+j)*3+1]=g_temp[(i*iWidth+j)*3+1]/mask;
-				g_temp[(i*iWidth+j)*3+2]=g_temp[(i*iWidth+j)*3+2]/mask;
-				for (int ii=-maskSize;ii<=maskSize;ii++)
-				{
-					for (int jj=-maskSize;jj<=maskSize;jj++)
-					{
-						if (ii || jj)
-						{
-						g_temp[(i*iWidth+j)*3+0]=g_temp[(i*iWidth+j)*3+0]+pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+0]/mask;
-						g_temp[(i*iWidth+j)*3+1]=g_temp[(i*iWidth+j)*3+1]+pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+1]/mask;
-						g_temp[(i*iWidth+j)*3+2]=g_temp[(i*iWidth+j)*3+2]+pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+2]/mask;
-						}
-					}
-				}
+				maskF(i,j,iWidth,iHeight,pRGBDsrSample);
+			
+			
+		
+				int R = g_last[(i*iWidth+j)*3+2];
+				int G = g_last[(i*iWidth+j)*3+1];
+				int B = g_last[(i*iWidth+j)*3+0];
 
-			}
-							int R = g_temp[(i*iWidth+j)*3+2];
-							int G = g_temp[(i*iWidth+j)*3+1];
-							int B = g_temp[(i*iWidth+j)*3+0];
-
-							/*float Y = 0.299f*R+0.587f*G+0.114f*B;
-							float U = -0.147f*R-0.289f*G+0.437f*B;
-							float V = 0.615f*R-0.515f*G+0.100f*B;*/
-				   /*
-					if((U<0)&&(V<0))
-					{
-					
-					g_last[(i*iWidth+j)*3+0] = g_pRGBBack[(i*g_iBackWidth+j)*3+0]; //0;
-					g_last[(i*iWidth+j)*3+1] = g_pRGBBack[(i*g_iBackWidth+j)*3+1]; // 0;
-					g_last[(i*iWidth+j)*3+2] = g_pRGBBack[(i*g_iBackWidth+j)*3+2]; //0;
-
-					}
-					else
-					{
-					
-					g_last[(i*iWidth+j)*3+0] = pRGBDsrSample[(i*iWidth+j)*3+0];
-					g_last[(i*iWidth+j)*3+1] = pRGBDsrSample[(i*iWidth+j)*3+1];
-					g_last[(i*iWidth+j)*3+2] =pRGBDsrSample[(i*iWidth+j)*3+2];
-					} 
-					
-				  */
-
-					
-					g_last[(i*iWidth+j)*3+0] = pRGBDsrSample[(i*iWidth+j)*3+0];
-					g_last[(i*iWidth+j)*3+1] = pRGBDsrSample[(i*iWidth+j)*3+1];
-					g_last[(i*iWidth+j)*3+2] = pRGBDsrSample[(i*iWidth+j)*3+2];
-
+				float Y = 0.299f*R+0.587f*G+0.114f*B;
+				float U = -0.147f*R-0.289f*G+0.437f*B;
+				float V = 0.615f*R-0.515f*G+0.100f*B;
+				
+			
 								
 					
 					
@@ -424,6 +388,34 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 					 }
 	if(g_bIsGetFrame)
     g_bIsGetFrame = false;
+ }
+
+
+
+ void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample )	// maska
+ {
+			if(maskSize && i>maskSize && j>maskSize && j<iWidth-maskSize && i<iHeight-maskSize)
+			{
+				g_temp[(i*iWidth+j)*3+0]=g_last[(i*iWidth+j)*3+0] /mask;
+				g_temp[(i*iWidth+j)*3+1]=g_last[(i*iWidth+j)*3+1] /mask;
+				g_temp[(i*iWidth+j)*3+2]=g_last[(i*iWidth+j)*3+2] /mask;
+
+				for (int ii=-maskSize;ii<=maskSize;ii++)
+				{
+					for (int jj=-maskSize;jj<=maskSize;jj++)
+					{
+						if (ii || jj)
+						{
+						g_temp[(i*iWidth+j)*3+0]=g_temp[(i*iWidth+j)*3+0]+pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+0]  /mask;
+						g_temp[(i*iWidth+j)*3+1]=g_temp[(i*iWidth+j)*3+1]+pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+1] /mask;
+						g_temp[(i*iWidth+j)*3+2]=g_temp[(i*iWidth+j)*3+2]+pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+2] /mask;
+						}
+					}
+				}
+				
+			
+				
+			}
  }
 
  void DrawSq(HWND hwnd, int iWidth, int iHeight)
@@ -510,7 +502,7 @@ void xDisplayBmpOnWindow(HWND hWnd,int iX, int iY, unsigned char* pRGBSample, in
 
 void IntToLpcstr(int liczba, char *cache)  //zamaian Int na LPCSTR
 {
-			(cache, "%d", liczba);
+			wsprintf (cache, "%d", liczba);
 }
  
 
@@ -521,8 +513,8 @@ void IntToLpcstr(int liczba, char *cache)  //zamaian Int na LPCSTR
 LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 HWND hWndButton;
-static HWND hWndLabel;
-HWND text;
+static HWND textbox;
+
   switch (message)
   {
   case WM_CREATE:
@@ -534,14 +526,14 @@ HWND text;
 	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save change"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,270,120,30,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
 	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,120,30,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-	hWndLabel =  CreateWindow("EDIT","Calibration Frame Size", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,200,120,60,hwnd,(HMENU)LABEL_X,GetModuleHandle(NULL),NULL);
+	textbox =  CreateWindow("EDIT","Calibration Frame Size", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,200,120,60,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
 	
 	
-	char detectionSize[1];					//wpisane wartosi do textboxa
+	char detectionSize[256];					//wpisane wartosi do textboxa
 	IntToLpcstr(g_iCalibFrameSize , detectionSize);
-	SetWindowText(hWndLabel, detectionSize);			//COS NIE DZIALA!
+	SetWindowText(textbox, detectionSize);			//COS NIE DZIALA!
 
-    xInitCamera(0,g_iWidth,g_iHeight); //Aktjwacja pierwszej kamery do pobierania obrazu o rozdzielczoœci 320x240
+    xInitCamera(0,g_iWidth,g_iHeight); //Aktjwacja pierwszej kamery do pobierania obrazu
 
 	g_pRGBOriginalSample = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na originalne próbki obrazu
     g_pRGBProcesedSample = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na przetworzone próbki obrazu
@@ -569,9 +561,10 @@ HWND text;
 
     break;
   case WM_PAINT:
-  //  xDisplayBmpOnWindow(hwnd,0,0,g_pRGBOriginalSample,g_iWidth,g_iHeight); //Narysowanie naszego buffora próbek obrazu na okienku
+  
     xDisplayBmpOnWindow(hwnd,0,0,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Narysowanie naszego buffora próbek obrazu na okienku
-	g_pRGBBack = ReadBmpFromFile("..\\..\\back\\white.bmp",g_iBackWidth, g_iBackHeight); //Wczyt obrazu z pliku
+	g_pRGBBack = ReadBmpFromFile("..\\..\\back\\white.bmp",g_iBackWidth, g_iBackHeight); //Wczyt domyslnego t³a obrazu z pliku
+
       break;
     break;
   case WM_TIMER:
@@ -581,6 +574,7 @@ HWND text;
       xGetFrame(g_pRGBOriginalSample);  //Pobranie 1 ramki obrazu z kamery
 
       DoSomeThingWithSample(g_pRGBOriginalSample,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Wywo³anie procedury przetwarzaj¹cej obraz
+
     //  xDisplayBmpOnWindow(hwnd,0,0,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Wyœwitlenie 1 ramki obrazu na okienku
 	  if (combined) xDisplayBmpOnWindow(hwnd,0,0,g_last,g_iWidth,g_iHeight); //Wyœwitlenie zmodyfikowanej ramki obrazu na okienku w innym miejscu
 	  if (back)xDisplayBmpOnWindow(hwnd,0,0,g_pRGBBack,g_iWidth,g_iHeight); //Wyœwitlenie zmodyfikowanej ramki obrazu na okienku w innym miejscu
@@ -609,22 +603,35 @@ HWND text;
 								
 			}
 			break;
+
 			
-	//case WM_MOUSEMOVE   :
-	//	{
-	//		POINT punkt;
-	//		GetCursorPos(&punkt);
-	//		ScreenToClient(hwnd,&punkt);
-	//		mouseX=punkt.x;
-	//		mouseY=punkt.y;
-	//		DrawSq(g_iHeight,g_iWidth);
-	//	}
-	//	break;
 
   case WM_COMMAND:
 	  if(HIWORD(wParam)==0)
 		  switch(LOWORD(wParam))	
 	  {
+
+		  case GRINBOX_SAVE:
+				
+				char szInput[256];					// czytanie z textbox
+				GetWindowText(GetDlgItem(hwnd, TEXTBOX_FRAMESIZE), szInput, 256);
+				g_iCalibFrameSize=atoi(szInput);
+
+				break;
+
+			
+			
+	case WM_MOUSEMOVE   :
+		{
+			POINT punkt;
+			GetCursorPos(&punkt);
+			ScreenToClient(hwnd,&punkt);
+			mouseX=punkt.x;
+			mouseY=punkt.y;
+			DrawSq(hwnd, g_iHeight,g_iWidth);
+		}
+		break;
+
 
 			case GRINBOX_CALIB_BUTTON:
 				//MessageBox(0,TEXT("Before calibrate load a background image!"),TEXT("Load image"),MB_OK);
@@ -638,12 +645,7 @@ HWND text;
 
 				break;
 
-			case GRINBOX_SAVE:
-				char szInput[1];					// czytanie z textbox
-				GetWindowText(GetDlgItem(hwnd, LABEL_X), szInput, 3);
-				g_iCalibFrameSize=(int)szInput[0];
-
-				break;
+			
 
 			case GRINBOX_DETECT_BUTTON:
 				xEndCalibrate();
@@ -697,22 +699,14 @@ HWND text;
 				mask=((1+2*maskSize)*(1+2*maskSize));
 				CheckMenuItem(GetMenu(hwnd),ID_MASK_OFF,MF_CHECKED);
 				CheckMenuItem(GetMenu(hwnd),ID_MASK_3,MF_UNCHECKED);
-				CheckMenuItem(GetMenu(hwnd),ID_MASK_5,MF_UNCHECKED);
 				break;
 			case ID_MASK_3:
 				maskSize=1;
 				mask=((1+2*maskSize)*(1+2*maskSize));
 				CheckMenuItem(GetMenu(hwnd),ID_MASK_OFF,MF_UNCHECKED);
 				CheckMenuItem(GetMenu(hwnd),ID_MASK_3,MF_CHECKED);
-				CheckMenuItem(GetMenu(hwnd),ID_MASK_5,MF_UNCHECKED);
 				break;
-			case ID_MASK_5:
-				maskSize=2;
-				mask=((1+2*maskSize)*(1+2*maskSize));
-				CheckMenuItem(GetMenu(hwnd),ID_MASK_OFF,MF_UNCHECKED);
-				CheckMenuItem(GetMenu(hwnd),ID_MASK_3,MF_UNCHECKED);
-				CheckMenuItem(GetMenu(hwnd),ID_MASK_5,MF_CHECKED);
-				break;
+		
 		  case ID_MENU_EXIT:
 			  PostQuitMessage(0);
 			  break;
