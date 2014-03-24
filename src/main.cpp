@@ -18,6 +18,7 @@ int g_iWidth = 1280;
 int g_iHeight = 720;
 int g_iCalibFrameSize =30;
 int g_iCalibFrameThick = 3;
+int bonusPix=1;	//dodatkowe pixele, pod ktore jest podstawiane tlo
 
 unsigned char *g_pRGBBack;
 int g_iBackWidth;
@@ -30,6 +31,11 @@ bool filtered;
 
 int maskSize=0;		
 int mask=1;
+
+int mouseX;
+int mouseY;
+
+void DrawSq(int iWidth, int iHeight);
 
 void xEndCalibrate()
 {
@@ -58,7 +64,7 @@ void xEndCalibrate()
   }
 
   //Create Histogram for display
- /* for(int i=0;i<256;i++)
+ /*for(int i=0;i<256;i++)
   {
     for(int j=0;j<256;j++)
     {
@@ -66,8 +72,8 @@ void xEndCalibrate()
       g_pRGBHistogramSample[(i*256+j)*3+1] = ppHist[i][j]*256/iMax;
       g_pRGBHistogramSample[(i*256+j)*3+2] = ppHist[i][j]*256/iMax;
     }
-  } */
-
+  } 
+  */
   //Deallokacje Pamieci
   for(int i=0;i<256;i++)
   {
@@ -283,6 +289,9 @@ void ResetHistogram(int iHeight, int iWidth)
 
 void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSample,int iWidth, int iHeight)
 {
+	
+
+
   for(int y=0;y<iHeight;y++) //Pêtla po wszystkich wierszach obrazu
   {
     for(int x=0;x<iWidth;x++) //Pêtla po wszystkich kolumnach obrazu
@@ -292,9 +301,7 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
       pRGBDsrSample[(y*iWidth+x)*3+2] = pRGBSrcSample[(y*iWidth+x)*3+2]; //Przepisanie s³adowej R
 	  //g_temp=pRGBDsrSample;
 /*
-	  g_last[(y*iWidth+x)*3+0] = pRGBSrcSample[(y*iWidth+x)*3+0]; //Przepisanie s³adowej B
-	  g_last[(y*iWidth+x)*3+1] = pRGBSrcSample[(y*iWidth+x)*3+1]; //Przepisanie s³adowej G
-	  g_last[(y*iWidth+x)*3+2] = pRGBSrcSample[(y*iWidth+x)*3+2]; //Przepisanie s³adowej R
+	  
 */
 	}
   }
@@ -332,9 +339,9 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 							int G = g_temp[(i*iWidth+j)*3+1];
 							int B = g_temp[(i*iWidth+j)*3+0];
 
-							float Y = 0.299f*R+0.587f*G+0.114f*B;
+							/*float Y = 0.299f*R+0.587f*G+0.114f*B;
 							float U = -0.147f*R-0.289f*G+0.437f*B;
-							float V = 0.615f*R-0.515f*G+0.100f*B;
+							float V = 0.615f*R-0.515f*G+0.100f*B;*/
 				   /*
 					if((U<0)&&(V<0))
 					{
@@ -358,35 +365,57 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 					g_last[(i*iWidth+j)*3+0] = pRGBDsrSample[(i*iWidth+j)*3+0];
 					g_last[(i*iWidth+j)*3+1] = pRGBDsrSample[(i*iWidth+j)*3+1];
 					g_last[(i*iWidth+j)*3+2] = pRGBDsrSample[(i*iWidth+j)*3+2];
-					
+
+								
 					
 					
 					 if(g_bIsCalibrating)
 					 {
-							//Przetwarzaj œrodek ekranu
-							if((i>=g_iWidth/2-g_iCalibFrameSize)&&(i<=g_iWidth/2+g_iCalibFrameSize)&&(j>=g_iHeight/2-g_iCalibFrameSize)&&(j<=g_iHeight/2+g_iCalibFrameSize))
-							{
-							  //Rysuj ramkê na œrodku ekranu
-							  if(!((i>=g_iWidth/2-g_iCalibFrameSize+g_iCalibFrameThick)&&(i<=g_iWidth/2+g_iCalibFrameSize-g_iCalibFrameThick)&&(j>=g_iHeight/2-g_iCalibFrameSize+g_iCalibFrameThick)&&(j<=g_iHeight/2+g_iCalibFrameSize-g_iCalibFrameThick)))
-							  {
-								g_last[(i*iWidth+j)*3+0] = 0;
-								g_last[(i*iWidth+j)*3+1] = 0;
-								g_last[(i*iWidth+j)*3+2] =255;
-							  }
-							  //Dodaj ramke do naszego histogramu
-							  if(g_bIsGetFrame)
-							  {
-								g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
-							  }
-							}
+						 if(j>=mouseX-g_iCalibFrameSize && j<=mouseX+g_iCalibFrameSize && i>=mouseY-g_iCalibFrameSize && i<=mouseY+g_iCalibFrameSize)
+							  
+							 
+								 //Dodaj ramke do naszego histogramu
+								   
+								   if(g_bIsGetFrame && j>0 && j<iWidth && i>0 && i<iHeight)
+								  {
+									g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
+									
+								  }
+						     
+
+							////Przetwarzaj œrodek ekranu
+							//if((j>=g_iWidth/2-g_iCalibFrameSize)&&(j<=g_iWidth/2+g_iCalibFrameSize)&&(i>=g_iHeight/2-g_iCalibFrameSize)&&(i<=g_iHeight/2+g_iCalibFrameSize))
+							//{
+							//  //Rysuj ramkê na œrodku ekranu
+							//  if(!((j>=g_iWidth/2-g_iCalibFrameSize+g_iCalibFrameThick)&&(j<=g_iWidth/2+g_iCalibFrameSize-g_iCalibFrameThick)&&(i>=g_iHeight/2-g_iCalibFrameSize+g_iCalibFrameThick)&&(i<=g_iHeight/2+g_iCalibFrameSize-g_iCalibFrameThick)))
+							//  {
+							//	g_last[(i*iWidth+j)*3+0] = 0;
+							//	g_last[(i*iWidth+j)*3+1] = 0;
+							//	g_last[(i*iWidth+j)*3+2] =255;
+							//  }
+							//  
+							//	 // Dodaj ramke do naszego histogramu
+							//	  if(g_bIsGetFrame)
+							//	  {
+							//		g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
+							//	  }
+							 
+							//	}
 						  }
 						  else
 						  {
 							if(g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V]>1)
 							{
-								g_last[(i*iWidth+j)*3+0] = g_pRGBBack[(i*g_iBackWidth+j)*3+0]; //0;
-								g_last[(i*iWidth+j)*3+1] = g_pRGBBack[(i*g_iBackWidth+j)*3+1]; // 0;
-								g_last[(i*iWidth+j)*3+2] = g_pRGBBack[(i*g_iBackWidth+j)*3+2]; //0;
+								for(int g=i-bonusPix; g<i+bonusPix; g++)
+									for(int h=j-bonusPix; h<j+bonusPix; h++)
+									{
+										if(h>0 && h<iWidth && g>0 && g<iHeight)
+										{
+											g_last[(g*iWidth+h)*3+0] = g_pRGBBack[(g*g_iBackWidth+h)*3+0]; //0;
+											g_last[(g*iWidth+h)*3+1] = g_pRGBBack[(g*g_iBackWidth+h)*3+1]; // 0;
+											g_last[(g*iWidth+h)*3+2] = g_pRGBBack[(g*g_iBackWidth+h)*3+2]; //0;
+										}
+									}
 							}
 		
 						}
@@ -395,6 +424,33 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 					 }
 	if(g_bIsGetFrame)
     g_bIsGetFrame = false;
+ }
+
+ void DrawSq(HWND hwnd, int iWidth, int iHeight)
+ {  
+	 HDC hDC = GetDC(hwnd);
+	 if(mouseX>0 && mouseX<iWidth && mouseY>0 && mouseY<iHeight)
+		 Rectangle(hDC, mouseX-g_iCalibFrameSize,iHeight- mouseY+g_iCalibFrameSize, mouseX+g_iCalibFrameSize,iHeight- mouseY-g_iCalibFrameSize);
+	
+
+	 /* for(int i=mouseY-g_iCalibFrameSize-g_iCalibFrameThick; i<mouseY+g_iCalibFrameSize+g_iCalibFrameThick; i++)
+	  {
+		for(int j=mouseX-g_iCalibFrameSize-g_iCalibFrameThick; j<mouseX+g_iCalibFrameSize+g_iCalibFrameThick;j++)
+		{
+			if((j>mouseX-g_iCalibFrameSize-g_iCalibFrameThick) &&	( j<mouseX - g_iCalibFrameSize + g_iCalibFrameThick) && (j>mouseX+g_iCalibFrameSize-g_iCalibFrameThick) &&	( j<mouseX + g_iCalibFrameSize + g_iCalibFrameThick) && (i > mouseY-g_iCalibFrameSize-g_iCalibFrameThick) &&	( i <mouseY - g_iCalibFrameSize + g_iCalibFrameThick) && (i>mouseY+g_iCalibFrameSize-g_iCalibFrameThick) &&	( i<mouseY + g_iCalibFrameSize + g_iCalibFrameThick));
+			{
+				
+				g_last[(i*iWidth+j)*3+0] = 0;
+				g_last[(i*iWidth+j)*3+1] = 0;
+				g_last[(i*iWidth+j)*3+2] =255;
+			}
+
+		}
+
+	  }*/
+ 
+
+	
  }
 
 void xInitCamera(int iDevice, int iWidth, int iHeight)
@@ -452,9 +508,21 @@ void xDisplayBmpOnWindow(HWND hWnd,int iX, int iY, unsigned char* pRGBSample, in
   ReleaseDC(hWnd,hDC);
 }
 
+void IntToLpcstr(int liczba, char *cache)  //zamaian Int na LPCSTR
+{
+			(cache, "%d", liczba);
+}
+ 
+
+ 
+
+
+
 LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 HWND hWndButton;
+static HWND hWndLabel;
+HWND text;
   switch (message)
   {
   case WM_CREATE:
@@ -463,15 +531,22 @@ HWND hWndButton;
     hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,80,120,30,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
     hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Get Frame"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,120,120,30,hwnd,(HMENU)GRINBOX_GETFRAME_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset Calibration"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,160,120,30,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-	 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,120,30,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save change"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,270,120,30,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
+	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,120,30,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+
+	hWndLabel =  CreateWindow("EDIT","Calibration Frame Size", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,200,120,60,hwnd,(HMENU)LABEL_X,GetModuleHandle(NULL),NULL);
+	
+	
+	char detectionSize[1];					//wpisane wartosi do textboxa
+	IntToLpcstr(g_iCalibFrameSize , detectionSize);
+	SetWindowText(hWndLabel, detectionSize);			//COS NIE DZIALA!
 
     xInitCamera(0,g_iWidth,g_iHeight); //Aktjwacja pierwszej kamery do pobierania obrazu o rozdzielczoœci 320x240
 
 	g_pRGBOriginalSample = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na originalne próbki obrazu
     g_pRGBProcesedSample = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na przetworzone próbki obrazu
-	g_last = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na przetworzone próbki obrazu
-	g_temp = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na przetworzone próbki obrazu
-	g_pRGBBack = ReadPpmFromFile("blank.ppm",g_iBackWidth, g_iBackHeight); //Wczyt obrazu z pliku
+	g_last = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na przetworzone próbki obrazu - combo
+	g_temp = new unsigned char [g_iWidth*g_iHeight*3]; //Allokacja buffora pamieci na przetworzone próbki obrazu - po filtracji
 	
     g_colorDetection = new unsigned int** [256]; //Allokacja buffora pamiêci na histogram obrazu
     for(int i=0;i<256;i++)
@@ -486,7 +561,7 @@ HWND hWndButton;
         }
       }
     }
-
+	
     SetTimer(hwnd,GRINBOX_ID_TIMER_GET_FRAME,40,NULL); //Ustawienie minutnika na co 40 milisekund
 
 	 g_bIsCalibrating = false;
@@ -496,6 +571,7 @@ HWND hWndButton;
   case WM_PAINT:
   //  xDisplayBmpOnWindow(hwnd,0,0,g_pRGBOriginalSample,g_iWidth,g_iHeight); //Narysowanie naszego buffora próbek obrazu na okienku
     xDisplayBmpOnWindow(hwnd,0,0,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Narysowanie naszego buffora próbek obrazu na okienku
+	g_pRGBBack = ReadBmpFromFile("..\\..\\back\\white.bmp",g_iBackWidth, g_iBackHeight); //Wczyt obrazu z pliku
       break;
     break;
   case WM_TIMER:
@@ -514,12 +590,44 @@ HWND hWndButton;
     }
     break;
 
+	
+	case WM_LBUTTONDOWN:
+			{
+				POINT punkt;
+				GetCursorPos(&punkt);
+				ScreenToClient(hwnd,&punkt);
+				mouseX=punkt.x;
+				mouseY=g_iHeight-   punkt.y;   //vertical change
+				g_bIsGetFrame = true;
+				DrawSq(hwnd, g_iWidth,g_iHeight);
+
+				/*char buffera[32];
+				sprintf(buffera, "%d", punkt.x); 
+				char bufferb[32];
+				sprintf(bufferb, "%d", punkt.y); 
+				char iks=punkt.x;*/
+								
+			}
+			break;
+			
+	//case WM_MOUSEMOVE   :
+	//	{
+	//		POINT punkt;
+	//		GetCursorPos(&punkt);
+	//		ScreenToClient(hwnd,&punkt);
+	//		mouseX=punkt.x;
+	//		mouseY=punkt.y;
+	//		DrawSq(g_iHeight,g_iWidth);
+	//	}
+	//	break;
+
   case WM_COMMAND:
 	  if(HIWORD(wParam)==0)
-		  switch(LOWORD(wParam))
+		  switch(LOWORD(wParam))	
 	  {
 
 			case GRINBOX_CALIB_BUTTON:
+				//MessageBox(0,TEXT("Before calibrate load a background image!"),TEXT("Load image"),MB_OK);
 				g_bIsCalibrating = true;
 				CheckMenuItem(GetMenu(hwnd),ID_BACK,MF_UNCHECKED);
 				CheckMenuItem(GetMenu(hwnd),ID_CAM,MF_UNCHECKED);
@@ -527,16 +635,30 @@ HWND hWndButton;
 				CheckMenuItem(GetMenu(hwnd),ID_FILTERED,MF_UNCHECKED);
 				combined=true;
 				filtered=cam=back=false;
+
 				break;
+
+			case GRINBOX_SAVE:
+				char szInput[1];					// czytanie z textbox
+				GetWindowText(GetDlgItem(hwnd, LABEL_X), szInput, 3);
+				g_iCalibFrameSize=(int)szInput[0];
+
+				break;
+
 			case GRINBOX_DETECT_BUTTON:
 				xEndCalibrate();
 				g_bIsCalibrating = false;
+				
+	
 				break;
 			case GRINBOX_GETFRAME_BUTTON:
 				g_bIsGetFrame = true;
 				break;
+
+			
+
 			case GRINBOX_RESET_BUTTON:
-				ResetHistogram(480,640);
+				ResetHistogram(g_iHeight,g_iWidth);
 				break;
 			case ID_BACK:
 				back=true;
@@ -599,7 +721,7 @@ HWND hWndButton;
 			  break;
 
 		  case ID_MENU_ABOUT:
-			  MessageBox(0,TEXT("Coded by\nKamil Czempiñski and Marcin No¿yñski\nunder Multimedia Scientific Circle\n\nversion 0.88.1 beta"),TEXT("About"),MB_OK);
+			  MessageBox(0,TEXT("Coded by\nMarcin No¿yñski and Kamil Czempiñski\nunder Multimedia Scientific Circle\n\nversion 0.88.1 beta"),TEXT("About"),MB_OK);
 			  break;
 		  case ID_MENU_LOADBACKGROUND:
 			  {
@@ -641,8 +763,8 @@ HWND hWndButton;
 					if(strstr(ofn.lpstrFile,".bmp"))	  
 					g_pRGBBack = ReadBmpFromFile(ofn.lpstrFile,g_iBackWidth, g_iBackHeight);
 
-					if(!strstr(ofn.lpstrFile,".bmp")&&!strstr(ofn.lpstrFile,".ppm"))
-						MessageBox(0,TEXT("Why ya clickin if not openin, dude?"),TEXT("WTF?"),MB_OK);
+//					if(!strstr(ofn.lpstrFile,".bmp")&&!strstr(ofn.lpstrFile,".ppm"))
+	//					MessageBox(0,TEXT("Why ya clickin if not openin, dude?"),TEXT("WTF?"),MB_OK);
 
 					
 

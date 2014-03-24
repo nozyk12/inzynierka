@@ -2,7 +2,7 @@
 #define __GRINBOX_MAIN_H__
 
 #include <windows.h>
-
+#include <string>
 
 
 #define GRINBOX_MAIN_ICON 101
@@ -15,6 +15,9 @@
 #define GRINBOX_GETFRAME_BUTTON 212
 #define GRINBOX_RESET_BUTTON 213
 #define GRINBOX_EXIT_BUTTON 214
+#define GRINBOX_SAVE 217
+#define LABEL_X 215
+#define LABEL_Y 216
 
 #define GRINBOX_ID_TIMER_GET_FRAME 501
 
