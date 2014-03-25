@@ -36,6 +36,10 @@ int mask=1;
 int mouseX;
 int mouseY;
 
+ //przyciski
+int butW=120;		//szerokosc przycisku
+int butH=30;	//wysokosc przycisku
+
 void DrawSq(int iWidth, int iHeight);
 void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample );
 
@@ -514,24 +518,28 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 HWND hWndButton;
 static HWND textbox;
-
+static HWND textbox_msg;
+HWND hedit;
   switch (message)
   {
   case WM_CREATE:
+	  
+	 
+	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Calibrate Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40,butW,butH,hwnd,(HMENU)GRINBOX_CALIB_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+    hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40+40,butW,butH,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
+    hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Get Frame"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40+80,butW,butH,hwnd,(HMENU)GRINBOX_GETFRAME_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset Calibration"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40+120,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save changes"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40+250, butW,butH,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
+	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,butW,butH,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Calibrate Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40,120,30,hwnd,(HMENU)GRINBOX_CALIB_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-    hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,80,120,30,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
-    hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Get Frame"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,120,120,30,hwnd,(HMENU)GRINBOX_GETFRAME_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset Calibration"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,160,120,30,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save change"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,270,120,30,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
-	hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,120,30,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-
-	textbox =  CreateWindow("EDIT","Calibration Frame Size", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,200,120,60,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
-	
+	//textboxy
+	hedit=		CreateWindow(TEXT("static"),TEXT("Calibration Frame\nSize"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,40+170,butW,30,hwnd,0,0,0);
+	textbox =  CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,40+205,butW,butH+10,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
+	textbox_msg =  CreateWindow("static","Mode:", WS_CHILD | WS_VISIBLE | SS_CENTER | WS_BORDER ,g_iWidth+20,40+300,120,40,hwnd,(HMENU)TEXTBOX_MSG,GetModuleHandle(NULL),NULL);
 	
 	char detectionSize[256];					//wpisane wartosi do textboxa
-	IntToLpcstr(g_iCalibFrameSize , detectionSize);
-	SetWindowText(textbox, detectionSize);			//COS NIE DZIALA!
+	IntToLpcstr(g_iCalibFrameSize , detectionSize);		
+	SetWindowText(textbox, detectionSize);			
 
     xInitCamera(0,g_iWidth,g_iHeight); //Aktjwacja pierwszej kamery do pobierania obrazu
 
@@ -564,7 +572,7 @@ static HWND textbox;
   
     xDisplayBmpOnWindow(hwnd,0,0,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Narysowanie naszego buffora próbek obrazu na okienku
 	g_pRGBBack = ReadBmpFromFile("..\\..\\back\\white.bmp",g_iBackWidth, g_iBackHeight); //Wczyt domyslnego t³a obrazu z pliku
-
+	SetWindowText(textbox_msg, "Mode:\r\nNone");
       break;
     break;
   case WM_TIMER:
@@ -594,13 +602,7 @@ static HWND textbox;
 				mouseY=g_iHeight-   punkt.y;   //vertical change
 				g_bIsGetFrame = true;
 				DrawSq(hwnd, g_iWidth,g_iHeight);
-
-				/*char buffera[32];
-				sprintf(buffera, "%d", punkt.x); 
-				char bufferb[32];
-				sprintf(bufferb, "%d", punkt.y); 
-				char iks=punkt.x;*/
-								
+					
 			}
 			break;
 
@@ -613,8 +615,8 @@ static HWND textbox;
 
 		  case GRINBOX_SAVE:
 				
-				char szInput[256];					// czytanie z textbox
-				GetWindowText(GetDlgItem(hwnd, TEXTBOX_FRAMESIZE), szInput, 256);
+				char szInput[10];					// czytanie z textbox
+				GetWindowText(GetDlgItem(hwnd, TEXTBOX_FRAMESIZE), szInput, 10);
 				g_iCalibFrameSize=atoi(szInput);
 
 				break;
@@ -642,7 +644,7 @@ static HWND textbox;
 				CheckMenuItem(GetMenu(hwnd),ID_FILTERED,MF_UNCHECKED);
 				combined=true;
 				filtered=cam=back=false;
-
+				SetWindowText(textbox_msg, "Mode:\r\nCalibration");
 				break;
 
 			
@@ -650,17 +652,18 @@ static HWND textbox;
 			case GRINBOX_DETECT_BUTTON:
 				xEndCalibrate();
 				g_bIsCalibrating = false;
-				
+				SetWindowText(textbox_msg, "Mode:\r\nDetect");
 	
 				break;
 			case GRINBOX_GETFRAME_BUTTON:
-				g_bIsGetFrame = true;
+				//g_bIsGetFrame = true;
 				break;
 
 			
 
 			case GRINBOX_RESET_BUTTON:
 				ResetHistogram(g_iHeight,g_iWidth);
+				SetWindowText(textbox_msg, "Mode:\r\nNone");
 				break;
 			case ID_BACK:
 				back=true;
@@ -715,7 +718,7 @@ static HWND textbox;
 			  break;
 
 		  case ID_MENU_ABOUT:
-			  MessageBox(0,TEXT("Coded by\nMarcin No¿yñski and Kamil Czempiñski\nunder Multimedia Scientific Circle\n\nversion 0.88.1 beta"),TEXT("About"),MB_OK);
+			  MessageBox(0,TEXT("Coded by\nMarcin No¿yñski \nversion 0.95 RC"),TEXT("About"),MB_OK);
 			  break;
 		  case ID_MENU_LOADBACKGROUND:
 			  {
