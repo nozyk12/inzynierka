@@ -84,6 +84,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="LoadPict.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\rc\rc.rc" />
