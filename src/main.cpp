@@ -30,6 +30,8 @@ bool back;
 bool cam;
 bool filtered;
 bool normal_mode=true;
+bool delete_pattern=false;
+bool add_patter=true;
 
 int maskSize=0;		
 int mask=1;
@@ -99,17 +101,36 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 			if(g_bIsCalibrating)
 			{
 
-				if(j>=mouseX-g_iCalibFrameSize && j<=mouseX+g_iCalibFrameSize && i>=mouseY-g_iCalibFrameSize && i<=mouseY+g_iCalibFrameSize)
 
+				if(g_bIsGetFrame)
+				{
 
-					//Dodaj ramke do naszego histogramu
+					if(j>=mouseX-g_iCalibFrameSize && j<=mouseX+g_iCalibFrameSize && i>=mouseY-g_iCalibFrameSize && i<=mouseY+g_iCalibFrameSize)
+						if( j>0 && j<iWidth && i>0 && i<iHeight)
+							if(delete_pattern)
+							{
+								for(double Y1=Y-0.2; Y1<Y+0.2; Y1=Y1+0.01)
+									for(double U1=U-0.05; U1<U+0.05;U1=U1+0.01)
+										for(double V1=V-0.05; V1<V+0.05;V1=V1+0.01)	
+											g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] =0;
+							}
+							else
+							{
+								for(double Y1=Y-0.2; Y1<Y+0.2; Y1=Y1+0.01)
+									for(double U1=U-0.05; U1<U+0.05;U1=U1+0.01)
+										for(double V1=V-0.05; V1<V+0.05;V1=V1+0.01)	
+											g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
+							}
+							
+				}
 
-						if(g_bIsGetFrame && j>0 && j<iWidth && i>0 && i<iHeight)
-							g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
+		//	}
+		//	else
+		//	{
+							
+								
+									
 
-			}
-			else
-			{
 				if(normal_mode==true)		//tryb normal
 				{
 					if(g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V]>1 )
@@ -138,22 +159,26 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 									g_last[(g*iWidth+h)*3+2] = g_pRGBBack[(g*g_iBackWidth+h)*3+2]; //0;
 								}
 							}
-					
+
 				}
+
+				
 
 			}
 
 
 
-
+			
 		}  //koniec for
 	}		// koniec for
+	
+
 	if(g_bIsGetFrame)
-		g_bIsGetFrame = false;
+		g_bIsGetFrame=false;
 }
 
 
-//! pobieranie probek, ktore chcemy zamienic na tlo, tworzy histogram
+
 void xEndCalibrate()
 {
 	unsigned int **ppHist;
@@ -244,29 +269,53 @@ void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample )
 
 void DrawSq(HWND hwnd, int iWidth, int iHeight)		
 {  
-	HDC hDC = GetDC(hwnd);
-	if(mouseX>0 && mouseX<iWidth && mouseY>0 && mouseY<iHeight)
-		Rectangle(hDC, mouseX-g_iCalibFrameSize,iHeight- mouseY+g_iCalibFrameSize, mouseX+g_iCalibFrameSize,iHeight- mouseY-g_iCalibFrameSize);
+		int xL=mouseX-g_iCalibFrameSize;
+		int xR=mouseX+g_iCalibFrameSize;
+		int yD=mouseY-g_iCalibFrameSize;
+		int yU=mouseY+g_iCalibFrameSize;
 
+		HDC hDC = GetDC(hwnd);
 
-	/* for(int i=mouseY-g_iCalibFrameSize-g_iCalibFrameThick; i<mouseY+g_iCalibFrameSize+g_iCalibFrameThick; i++)
-	{
-	for(int j=mouseX-g_iCalibFrameSize-g_iCalibFrameThick; j<mouseX+g_iCalibFrameSize+g_iCalibFrameThick;j++)
-	{
-	if((j>mouseX-g_iCalibFrameSize-g_iCalibFrameThick) &&	( j<mouseX - g_iCalibFrameSize + g_iCalibFrameThick) && (j>mouseX+g_iCalibFrameSize-g_iCalibFrameThick) &&	( j<mouseX + g_iCalibFrameSize + g_iCalibFrameThick) && (i > mouseY-g_iCalibFrameSize-g_iCalibFrameThick) &&	( i <mouseY - g_iCalibFrameSize + g_iCalibFrameThick) && (i>mouseY+g_iCalibFrameSize-g_iCalibFrameThick) &&	( i<mouseY + g_iCalibFrameSize + g_iCalibFrameThick));
-	{
-
-	g_last[(i*iWidth+j)*3+0] = 0;
-	g_last[(i*iWidth+j)*3+1] = 0;
-	g_last[(i*iWidth+j)*3+2] =255;
-	}
-
-	}
-
-	}*/
+		if(xL<iWidth)
+		{
+		
+			if(xL<0)
+				xL=0;
+			if(xR>iWidth)
+				xR=iWidth;
+			if(yD<0)
+				yD=0;
+			if(yU>iHeight)
+				yU=iHeight;
 
 
 
+			//&& mouseX+g_iCalibFrameSize<iWidth && mouseY-g_iCalibFrameSize>0 && mouseY+g_iCalibFrameSize<iHeight)
+
+			Rectangle(hDC, xL,iHeight-yU, xR, iHeight- yD);
+		}
+
+		
+
+
+//	 for(int i=mouseY-g_iCalibFrameSize; i<mouseY+g_iCalibFrameSize; i++)
+//		{
+//		for(int j=mouseX-g_iCalibFrameSize; j<mouseX+g_iCalibFrameSize; j++)
+//		{
+//			//if((j>mouseX-g_iCalibFrameSize-g_iCalibFrameThick) &&	( j<mouseX - g_iCalibFrameSize + g_iCalibFrameThick) && (j>mouseX+g_iCalibFrameSize-g_iCalibFrameThick) &&	( j<mouseX + g_iCalibFrameSize + g_iCalibFrameThick) && (i > mouseY-g_iCalibFrameSize-g_iCalibFrameThick) &&	( i <mouseY - g_iCalibFrameSize + g_iCalibFrameThick) && (i>mouseY+g_iCalibFrameSize-g_iCalibFrameThick) &&	( i<mouseY + g_iCalibFrameSize + g_iCalibFrameThick));
+//			
+//			
+//					g_last[(i*iWidth+j)*3+0] = 0;
+//					g_last[(i*iWidth+j)*3+1] = 255;
+//					g_last[(i*iWidth+j)*3+2] =255;
+//				
+//
+//		}
+//
+//	}
+//
+//
+//
 }
 
 
@@ -347,27 +396,51 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HWND hWndButton;
 	static HWND textbox;
 	static HWND textbox_msg;
-	HWND hedit;
+	HWND text;
+	HWND res_combobox;
 	switch (message)
 	{
 	case WM_CREATE:
 
 
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Calibrate Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,40,butW,butH,hwnd,(HMENU)GRINBOX_CALIB_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,80,butW,butH,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Add pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,20,butW,butH,hwnd,(HMENU)GRINBOX_ADD_PATTERN_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		//hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,55,butW,butH,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
 		//hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Get Frame"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,120,butW,butH,hwnd,(HMENU)GRINBOX_GETFRAME_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset Calibration"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,120,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save changes"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,250, butW,butH,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset Calibration"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,90,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Delete pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,55,butW,butH,hwnd,(HMENU)GRINBOX_DELETE_PATTERN_BUTON,GetModuleHandle(NULL),NULL);  ///////////
+
+		textbox_msg =  CreateWindow("static","Mode:", WS_CHILD | WS_VISIBLE | SS_CENTER | WS_BORDER ,g_iWidth+20,175,120,40,hwnd,(HMENU)TEXTBOX_MSG,GetModuleHandle(NULL),NULL);
+
+		text=		CreateWindow(TEXT("static"),TEXT("Tools:\n~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,230,butW,30,hwnd,0,0,0);
+
+		text=		CreateWindow(TEXT("static"),TEXT("Calibration Frame\nSize"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,270,butW,30,hwnd,0,0,0);
+		textbox =  CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,302,butW,butH+10,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save changes"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,344, butW,butH,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
+
+
+
+		text=		CreateWindow(TEXT("static"),TEXT("Display Mode:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,390,butW,20,hwnd,0,0,0);
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Normal"),BS_AUTORADIOBUTTON | WS_GROUP |BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,410,butW,butH,hwnd,(HMENU)NORMAL_MODE,GetModuleHandle(NULL),NULL);  ///////////		
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reverse"),BS_AUTORADIOBUTTON | BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,440,butW,butH,hwnd,(HMENU)REVERSE_MODE,GetModuleHandle(NULL),NULL);  ///////////
+
+
+		text=		CreateWindow(TEXT("static"),TEXT("Settings:\n~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-220,butW,30,hwnd,0,0,0);
+		text=		CreateWindow(TEXT("static"),TEXT("Camera resolution"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-180,butW,18,hwnd,0,0,0);
+		res_combobox = CreateWindowEx(WS_EX_CLIENTEDGE,"COMBOBOX","Resolution",WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST,g_iWidth+20,g_iHeight-160,butW,80,hwnd,(HMENU)RES_LIST,GetModuleHandle(NULL),NULL);
+
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Load background"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-120,butW,butH,hwnd,(HMENU)LOADBACK_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+
 		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,butW,butH,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Normal"),BS_AUTORADIOBUTTON | WS_GROUP |BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,360,butW,butH,hwnd,(HMENU)NORMAL_MODE,GetModuleHandle(NULL),NULL);  ///////////		
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reverse"),BS_AUTORADIOBUTTON | BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,400,butW,butH,hwnd,(HMENU)REVERSE_MODE,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Load background"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,440,butW,butH,hwnd,(HMENU)LOADBACK_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
 
-		//textboxy
-		hedit=		CreateWindow(TEXT("static"),TEXT("Calibration Frame\nSize"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,170,butW,30,hwnd,0,0,0);
-		textbox =  CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,205,butW,butH+10,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
-		textbox_msg =  CreateWindow("static","Mode:", WS_CHILD | WS_VISIBLE | SS_CENTER | WS_BORDER ,g_iWidth+20,300,120,40,hwnd,(HMENU)TEXTBOX_MSG,GetModuleHandle(NULL),NULL);
+
+		//i dodajemy kilka pozycji
+
+		SendMessage(res_combobox, CB_ADDSTRING,0, (LPARAM)"640x480");
+		//pozycja_3 = SendMessage(cb_handle, CB_ADDSTRING,0, (LPARAM)"3");
+		SendMessage(res_combobox, CB_ADDSTRING,0, (LPARAM)"1280x720");
+		SendMessage(res_combobox, CB_ADDSTRING,0, (LPARAM)"1920x1080");
+
 
 		char detectionSize[256];					//wpisane wartosi do textboxa	
 		IntToLpcstr(g_iCalibFrameSize , detectionSize);		
@@ -440,6 +513,8 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 
+
+
 	case WM_COMMAND:
 		if(HIWORD(wParam)==0)
 			switch(LOWORD(wParam))	
@@ -467,7 +542,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;*/
 
 
-			case GRINBOX_CALIB_BUTTON:
+			case GRINBOX_ADD_PATTERN_BUTTON:
 				//MessageBox(0,TEXT("Before calibrate load a background image!"),TEXT("Load image"),MB_OK);
 				g_bIsCalibrating = true;
 				CheckMenuItem(GetMenu(hwnd),ID_BACK,MF_UNCHECKED);
@@ -476,14 +551,17 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(GetMenu(hwnd),ID_FILTERED,MF_UNCHECKED);
 				combined=true;
 				filtered=cam=back=false;
-				SetWindowText(textbox_msg, "Mode:\r\nCalibration");
+				delete_pattern=false;
+
+				SetWindowText(textbox_msg, "Mode:\r\nAdd pattern");
 				break;
 
 
 
 			case GRINBOX_DETECT_BUTTON:
-				xEndCalibrate();
+				//xEndCalibrate();
 				g_bIsCalibrating = false;
+				delete_pattern=false;
 				SetWindowText(textbox_msg, "Mode:\r\nDetect");
 
 				break;
@@ -499,12 +577,23 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				normal_mode=false;
 				break;
 
+			case RES_LIST:
+
+				break;
+
+			case GRINBOX_DELETE_PATTERN_BUTON:
+				SetWindowText(textbox_msg, "Mode:\r\nDelete Pattern");
+				delete_pattern=true;
+				break;
 
 
 			case GRINBOX_RESET_BUTTON:
 				ResetHistogram(g_iHeight,g_iWidth);
+				g_bIsCalibrating = false;
+				normal_mode=true;
 				SetWindowText(textbox_msg, "Mode:\r\nNone");
 				break;
+
 			case ID_BACK:
 				back=true;
 				filtered=cam=combined=false;
