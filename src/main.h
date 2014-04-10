@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <string>
 #include <stdlib.h>
+#include <fstream>
+
 
 
 
@@ -25,6 +27,23 @@
 #define LOADBACK_BUTTON 220
 #define RES_LIST 221
 #define GRINBOX_DELETE_PATTERN_BUTON 222
+#define TEXTBOX_RANGE 223
+#define RGB_RANGE_SAVE_BUTTON 230
+#define YUV_RANGE_SAVE_BUTTON 237
+
+#define R1_EDIT 224
+#define G1_EDIT 225
+#define B1_EDIT 226
+#define R2_EDIT 227
+#define G2_EDIT 228
+#define B2_EDIT 229
+
+#define Y1_EDIT 231
+#define U1_EDIT 232
+#define V1_EDIT 233
+#define Y2_EDIT 234
+#define U2_EDIT 235
+#define V2_EDIT 236
 
 #define GRINBOX_ID_TIMER_GET_FRAME 501
 
