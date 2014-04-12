@@ -5,7 +5,7 @@
 #include <string>
 #include <stdlib.h>
 #include <fstream>
-
+#include <algorithm>
 
 
 
@@ -30,6 +30,7 @@
 #define TEXTBOX_RANGE 223
 #define RGB_RANGE_SAVE_BUTTON 230
 #define YUV_RANGE_SAVE_BUTTON 237
+#define GRINBOX_OWN_FUNCT_BUTTON 238
 
 #define R1_EDIT 224
 #define G1_EDIT 225
@@ -44,6 +45,7 @@
 #define Y2_EDIT 234
 #define U2_EDIT 235
 #define V2_EDIT 236
+
 
 #define GRINBOX_ID_TIMER_GET_FRAME 501
 

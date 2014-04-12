@@ -13,6 +13,9 @@ unsigned char *g_temp;
 
 
 unsigned int ***g_colorDetection;
+
+char own_function_array[1280][720]={};
+
 bool g_bIsCalibrating;
 bool g_bIsGetFrame;
 
@@ -24,11 +27,19 @@ int combobox_index;
 int inc_range=3;
 bool RGB_range_active = false;
 bool YUV_range_active = false;
+bool own_function=false;
+const int median_filter_size=1;			// rozmiar filtru medianowego
+
+int median_filter_array_R[(2*median_filter_size+1)*(2*median_filter_size+1)];
+int median_filter_array_G[(2*median_filter_size+1)*(2*median_filter_size+1)];
+int median_filter_array_B[(2*median_filter_size+1)*(2*median_filter_size+1)];
+
 
 
 int R_low, G_low, B_low, R_up, G_up, B_up;
 double Y_low, U_low, V_low, Y_up, U_up, V_up;
-
+double y11,u11,v11,y22,u22,v22;
+int r11,g11,b11,r22,g22,b22;
 
 
 unsigned char *g_pRGBBack;
@@ -59,9 +70,13 @@ int butH=30;	//wysokosc przycisku
 //void DrawSq(HWND hwnd, int iWidth, int iHeight);		//funkcja rysujaca kwadrat w miejscu pobierania probek
 void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample );
 
+
+void median_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample, int n );
+
 //! wczytywanie plikow BMP i PPM jako tla
 unsigned char* ReadBmpFromFile(char* szFileName,int &riWidth, int &riHeight);
 unsigned char* ReadPpmFromFile(char* szFileName,int &riWidth, int &riHeight);
+
 
  
 
@@ -113,13 +128,14 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 			{
 
 
-				if(g_bIsGetFrame)
+				if(g_bIsGetFrame && !own_function)
 				{
 
 					if(j>=mouseX-g_iCalibFrameSize && j<=mouseX+g_iCalibFrameSize && i>=mouseY-g_iCalibFrameSize && i<=mouseY+g_iCalibFrameSize)
-						if( j>0 && j<iWidth && i>0 && i<iHeight)
+					{
+						
 							if(delete_pattern)   //usuwanie probek
-							{   
+							{
 								for(float Y1=Y-inc_range; Y1<=Y+inc_range; Y1=Y1++)
 									for(float U1=U-inc_range; U1<=U+inc_range;U1=U1++)
 										for(float V1=V-inc_range; V1<=V+inc_range;V1=V1++)	
@@ -135,8 +151,14 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 											g_colorDetection[(unsigned char)Y1][(unsigned char)U1][(unsigned char)V1] += 1;
 							}
 							
+					}
+							
 				}
 				
+
+
+
+
 				if(RGB_range_active)
 				{
 					for(int r=R_low; r<=R_up; r++)
@@ -154,9 +176,23 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 
 				if(YUV_range_active)
 				{
-					for(double y=Y_low; y<=Y_up; y+=0.2)
-						for(double u=U_low; u<=U_up; u+=0.2)
-							for(double v=V_low; v<=V_up; v+=0.2)
+					if(U_low>U_up)
+					{
+						int temp=U_low;
+						U_low=U_up;
+						U_up=temp;
+					}
+
+					if(V_low>V_up)
+					{
+						int temp=V_low;
+						V_low=V_up;
+						V_up=temp;
+					}
+					
+					for(double y=Y_low; y<=Y_up; y+=1)
+						for(double u=U_low; u<=U_up; u+=1)
+							for(double v=V_low; v<=V_up; v+=1)
 								g_colorDetection[(unsigned char)y][(unsigned char)u][(unsigned char)v] += 1;
 
 
@@ -198,8 +234,24 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 							}
 
 				}
-			
 
+
+			} // koniec isCalibrating
+
+			if(own_function)
+			{
+				if(g_bIsGetFrame)
+					if(j>=mouseX-g_iCalibFrameSize && j<=mouseX+g_iCalibFrameSize && i>=mouseY-g_iCalibFrameSize && i<=mouseY+g_iCalibFrameSize)
+					{
+						own_function_array[j][i]=1;
+						
+					}
+
+
+				if(own_function_array[j][i]==1)
+				{	
+					median_filter(i,j,iWidth,iHeight,pRGBDsrSample, median_filter_size);	
+				}
 			}
 
 
@@ -273,6 +325,14 @@ void ResetHistogram(int iHeight, int iWidth)
 				g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] = 0;
 		}
 	}
+
+
+	for(int i=0; i<iHeight;i++)
+		for(int j=0; j<iWidth;j++)
+			own_function_array[j][i]=0;
+		
+
+
 }	 
 
 //! maska usredniajaca
@@ -334,10 +394,39 @@ void DrawSq(HWND hwnd, int iWidth, int iHeight)
 
 }
 
+void median_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample, int n)
+{
+	if(i>n && j>n && j<iWidth-n && i<iHeight-n)
+	{
+		int temp=0;
+		for (int ii=-n; ii<=n; ii++)
+		{
+			for (int jj=-n; jj<=n; jj++)
+			{
+				median_filter_array_B[temp] = pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+0] ;
+				median_filter_array_G[temp] = pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+1] ;
+				median_filter_array_R[temp] = pRGBDsrSample[((i+ii)*iWidth+(j+jj))*3+2] ;
+				temp++;
+				
+			}
+		}
+		std::sort(std::begin(median_filter_array_B), std::end(median_filter_array_B));
+		std::sort(std::begin(median_filter_array_G), std::end(median_filter_array_G));
+		std::sort(std::begin(median_filter_array_R), std::end(median_filter_array_R));
+
+				
+		temp/=2;
+		temp++;
+
+		g_last[(i*iWidth+j)*3+0] = median_filter_array_B[temp];
+		g_last[(i*iWidth+j)*3+1] = median_filter_array_G[temp];
+		g_last[(i*iWidth+j)*3+2] = median_filter_array_R[temp];
+		
+	}
+}
 
 
 
-//! zamaian Int na LPCSTR
 
 
 
@@ -351,7 +440,8 @@ void xInitCamera( int iDevice, int &width, int &height)
 
 	width = VI.getWidth(iDevice);
 	height = VI.getHeight(iDevice);
-	
+
+
 	size = VI.getSize(iDevice); // size to initialize `
 
 }
@@ -465,8 +555,10 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Add pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,20,butW,butH,hwnd,(HMENU)GRINBOX_ADD_PATTERN_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 		//hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,55,butW,butH,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
 		//hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Get Frame"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,120,butW,butH,hwnd,(HMENU)GRINBOX_GETFRAME_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset Calibration"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,90,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset all"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,90,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Delete pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,55,butW,butH,hwnd,(HMENU)GRINBOX_DELETE_PATTERN_BUTON,GetModuleHandle(NULL),NULL);  ///////////
+
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Own function"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+160,20,butW,butH,hwnd,(HMENU)GRINBOX_OWN_FUNCT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
 		textbox_msg =  CreateWindow("static","Mode:", WS_CHILD | WS_VISIBLE | SS_CENTER | WS_BORDER ,g_iWidth+20,155,120,40,hwnd,(HMENU)TEXTBOX_MSG,GetModuleHandle(NULL),NULL);
 
@@ -499,7 +591,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save RGB range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,550, butW,butH,hwnd,(HMENU)RGB_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-		 text=		CreateWindow(TEXT("static"),TEXT("YUV range:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+160,475,butW,20,hwnd,0,0,0);
+		 text=		CreateWindow(TEXT("static"),TEXT("YUV range:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+160,475,154,20,hwnd,0,0,0);
 
 		 Y1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+160,500,50,20,hwnd,(HMENU)Y1_EDIT,GetModuleHandle(NULL),NULL);
 		 U1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+212,500,50,20,hwnd,(HMENU)U1_EDIT,GetModuleHandle(NULL),NULL);
@@ -509,7 +601,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		 U2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+212,525,50,20,hwnd,(HMENU)U2_EDIT,GetModuleHandle(NULL),NULL);
 		 V2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+264,525,50,20,hwnd,(HMENU)V2_EDIT,GetModuleHandle(NULL),NULL);
 
-		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save YUV range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+160,550, butW,butH,hwnd,(HMENU)YUV_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save YUV range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+160,550, 154,butH,hwnd,(HMENU)YUV_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
 		//text=		CreateWindow(TEXT("static"),TEXT("Settings:\n~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-220,butW,30,hwnd,0,0,0);
 	//	text=		CreateWindow(TEXT("static"),TEXT("Camera resolution"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-180,butW,18,hwnd,0,0,0);
@@ -600,13 +692,14 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDOWN:
 		{
-			if(g_bIsCalibrating==true)
+			if(g_bIsCalibrating || own_function)
 			{			
 				mouseX=punkt.x;
 				mouseY=g_iHeight - punkt.y;   //vertical change
 				g_bIsGetFrame = true;
 				DrawSq(hwnd, g_iWidth,g_iHeight);
 			}
+			
 
 		}
 		break;
@@ -614,7 +707,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_MOUSEMOVE:
 		{
-			if(g_bIsCalibrating==true)					
+			if(g_bIsCalibrating || own_function)					
 			{
 				mouseX=punkt.x;
 				mouseY=g_iHeight - punkt.y;   //vertical change
@@ -654,9 +747,13 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				inc_range=atoi(szInput);
 
 				break;
+				
+
 
 			case RGB_RANGE_SAVE_BUTTON:
 
+				ResetHistogram(g_iHeight, g_iWidth);
+				
 				char szInput1[10];	// czytanie z textbox
 				GetWindowText(GetDlgItem(hwnd, R1_EDIT), szInput1, 10);
 				R_low=atoi(szInput1);
@@ -746,20 +843,46 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				RGB_range_active=true;
 
 
+				y11=0.299*R_low+0.587*G_low+0.114*B_low;
+			    u11=-0.147*R_low-0.289*G_low+0.436*B_low;
+				v11=0.615*R_low-0.515*G_low+0.100*B_low;
+
+				y22=0.299*R_up+0.587*G_up+0.114*B_up;
+				u22=-0.147*R_up-0.289*G_up+0.436*B_up;
+				v22=0.615*R_up-0.515*G_up+0.100*B_up;
+
+
+				if(y11<0)  y11=0;
+				if(y11>255) y11=255;
+				if(u11<-128) u11=-128;
+				if(u11>127) u11=127;
+				if(v11<-128) v11=-128;
+				if(v11>127) v11=127;
+
+				if(y22<0)  y22=0;
+				if(y22>255) y22=255;
+				if(u22<-128) u22=-128;
+				if(u22>127) u22=127;
+				if(v22<-128) v22=-128;
+				if(v22>127) v22=127;
+
+
+
+				setTextBoxDOUBLE( y11 , Y1 );
+				setTextBoxDOUBLE( u11 , U1 );
+				setTextBoxDOUBLE( v11 , V1 );
+
+				setTextBoxDOUBLE( y22, Y2 );
+				setTextBoxDOUBLE( u22, U2 );
+				setTextBoxDOUBLE( v22, V2 );
 
 				
-
-				setTextBoxDOUBLE( 0.299f*R_low+0.587f*G_low+0.114f*B_low , Y1 );
-				setTextBoxDOUBLE( -0.147f*R_low-0.289f*G_low+0.437f*B_low , U1 );
-				setTextBoxDOUBLE( 0.615f*R_low-0.515f*G_low+0.100f*B_low, V1 );
-
-				setTextBoxDOUBLE( 0.299f*R_up+0.587f*G_up+0.114f*B_up , Y2 );
-				setTextBoxDOUBLE( -0.147f*R_up-0.289f*G_up+0.437f*B_up , U2 );
-				setTextBoxDOUBLE( 0.615f*R_up-0.515f*G_up+0.100f*B_up, V2 );
 
 				break;
 
 			case YUV_RANGE_SAVE_BUTTON:
+
+				ResetHistogram(g_iHeight, g_iWidth);
 
 				char szInput2[10];	// czytanie z textbox
 
@@ -792,7 +915,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				GetWindowText(GetDlgItem(hwnd, U1_EDIT), szInput2, 10);
 				U_low=atof(szInput2);
-				if(U_low<-128)
+		/*		if(U_low<-128)
 				{
 					U_low=-128;
 					setTextBoxDOUBLE(U_low,U1);
@@ -802,10 +925,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					U_low=127;
 					setTextBoxDOUBLE(U_low,U1);
 				}
+				*/
 					
 				GetWindowText(GetDlgItem(hwnd, U2_EDIT), szInput2, 10);
 				U_up=atof(szInput2);
-				if(U_up<-128)
+			/*	if(U_up<-128)
 				{
 					U_up=-128;
 					setTextBoxDOUBLE(U_up,U2);
@@ -815,10 +939,10 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					U_up=127;
 					setTextBoxDOUBLE(U_up,U2);
 				}
-
+				*/
 				GetWindowText(GetDlgItem(hwnd, V1_EDIT), szInput2, 10);
 				V_low=atof(szInput2);
-				if(V_low<-128)
+		/*		if(V_low<-128)
 				{
 					V_low=-128;
 					setTextBoxDOUBLE(V_low,V1);
@@ -827,11 +951,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					V_low=127;
 					setTextBoxDOUBLE(U_low,V1);
-				}
+				}*/
 					
 				GetWindowText(GetDlgItem(hwnd, V2_EDIT), szInput2, 10);
 				V_up=atof(szInput2);
-				if(V_up<-128)
+			/*	if(V_up<-128)
 				{
 					V_up=-128;
 					setTextBoxDOUBLE(V_up,V2);
@@ -840,19 +964,46 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					V_up=127;
 					setTextBoxDOUBLE(V_up,V2);
-				}
+				}*/
 
 
 				g_bIsCalibrating=true;
 				YUV_range_active=true;
 
-				setTextBoxINT(Y_low + (V_low/0.877), R1);
-				setTextBoxINT(Y_low- 0.395*U_low - 0.581 * V_low, G1);
-				setTextBoxINT(Y_low + (U_low/0.492), B1);
 
-				setTextBoxINT(Y_up + (V_up/0.877), R2);
-				setTextBoxINT(Y_up- 0.395*U_up - 0.581 * V_up, G2);
-				setTextBoxINT(Y_up + (U_up/0.492), B2);
+				r11=Y_low + (V_low/0.877);
+				g11=Y_low- 0.395*U_low - 0.581 * V_low;
+				b11=Y_low + (U_low/0.492);
+
+				r22=Y_up + (V_up/0.877);
+				g22=Y_up- 0.395*U_up - 0.581 * V_up;
+				b22=Y_up + (U_up/0.492);
+
+
+				if(r11<0) r11=0;
+				if(r11>255) r11=255;
+				if(g11<0) g11=0;
+				if(g11>255) g11=255;
+				if(b11<0) b11=0;
+				if(b11>255) b11=255;
+
+				if(r22<0) r22=0;
+				if(r22>255) r22=255;
+				if(g22<0) g22=0;
+				if(g22>255) g22=255;
+				if(b22<0) b22=0;
+				if(b22>255) b22=255;
+
+
+
+
+				setTextBoxINT(r11, R1);
+				setTextBoxINT(g11, G1);
+				setTextBoxINT(b11, B1);
+
+				setTextBoxINT(r22, R2);
+				setTextBoxINT(g22, G2);
+				setTextBoxINT(b22, B2);
 
 
 				break;
@@ -867,12 +1018,14 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				combined=true;
 				filtered=cam=back=false;
 				delete_pattern=false;
+				own_function=false;
 				SetWindowText(textbox_msg, "Mode:\r\nAdd pattern");
 				break;
 
 			case GRINBOX_DELETE_PATTERN_BUTON:
 				SetWindowText(textbox_msg, "Mode:\r\nDelete Pattern");
 				delete_pattern=true;
+				own_function=false;
 				break;
 
 
@@ -882,9 +1035,38 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				normal_mode=true;
 				RGB_range_active=false;
 				YUV_range_active=false;
+				own_function=false;
 				SetWindowText(textbox_msg, "Mode:\r\nNone");
+
+				setTextBoxDOUBLE( 0.0 , Y1 );
+				setTextBoxDOUBLE( 0.0 , U1 );
+				setTextBoxDOUBLE( 0.0 , V1 );
+
+				setTextBoxDOUBLE( 0.0, Y2 );
+				setTextBoxDOUBLE( 0.0, U2 );
+				setTextBoxDOUBLE( 0.0, V2 );
+
+				setTextBoxINT( 0 , R1 );
+				setTextBoxINT( 0 , G1 );
+				setTextBoxINT( 0 , B1 );
+
+				setTextBoxINT( 0, R2 );
+				setTextBoxINT( 0, G2 );
+				setTextBoxINT( 0, B2 );
+
 				break;
 
+			case GRINBOX_OWN_FUNCT_BUTTON:
+				own_function=true;
+				CheckMenuItem(GetMenu(hwnd),ID_BACK,MF_UNCHECKED);
+				CheckMenuItem(GetMenu(hwnd),ID_CAM,MF_UNCHECKED);
+				CheckMenuItem(GetMenu(hwnd),ID_COMB,MF_CHECKED);
+				CheckMenuItem(GetMenu(hwnd),ID_FILTERED,MF_UNCHECKED);
+				combined=true;
+				filtered=cam=back=false;
+				delete_pattern=false;
+				SetWindowText(textbox_msg, "Mode:\r\nOwn function");
+				break;
 
 
 			case NORMAL_MODE:
@@ -1057,6 +1239,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine
 	if ( !RegisterClass( &wc ) ) return( FALSE );
 
 	xInitCamera(0,g_iWidth,g_iHeight); //Aktjwacja pierwszej kamery do pobierania obrazu
+
+	
 
 
 	// Tworzenie g³ównego okna aplikacji
