@@ -14,7 +14,7 @@ unsigned char *g_temp;
 
 unsigned int ***g_colorDetection;
 
-char own_function_array[1280][720]={};
+bool own_function_array[1280][720]={};
 
 bool g_bIsCalibrating;
 bool g_bIsGetFrame;
@@ -25,10 +25,11 @@ int g_iCalibFrameSize =30;			//rozmiar ramki pobieraj¹cej próbki
 int bonusPix=0;						//dodatkowe pixele, pod ktore jest podstawiane tlo
 int combobox_index;
 int inc_range=3;
+const int median_filter_size=1;			// rozmiar filtru medianowego
+
 bool RGB_range_active = false;
 bool YUV_range_active = false;
 bool own_function=false;
-const int median_filter_size=1;			// rozmiar filtru medianowego
 
 int median_filter_array_R[(2*median_filter_size+1)*(2*median_filter_size+1)];
 int median_filter_array_G[(2*median_filter_size+1)*(2*median_filter_size+1)];
@@ -88,30 +89,30 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 
 
 
-	for(int y=0;y<iHeight;y++) //Pêtla po wszystkich wierszach obrazu
-	{
-		for(int x=0;x<iWidth;x++) //Pêtla po wszystkich kolumnach obrazu
-		{
-			pRGBDsrSample[(y*iWidth+x)*3+0] = pRGBSrcSample[(y*iWidth+x)*3+0]; //Przepisanie s³adowej B
-			pRGBDsrSample[(y*iWidth+x)*3+1] = pRGBSrcSample[(y*iWidth+x)*3+1]; //Przepisanie s³adowej G
-			pRGBDsrSample[(y*iWidth+x)*3+2] = pRGBSrcSample[(y*iWidth+x)*3+2]; //Przepisanie s³adowej R
+	//for(int y=0;y<iHeight;y++) //Pêtla po wszystkich wierszach obrazu
+	//{
+	//	for(int x=0;x<iWidth;x++) //Pêtla po wszystkich kolumnach obrazu
+	//	{
+	//		pRGBDsrSample[(y*iWidth+x)*3+0] = pRGBSrcSample[(y*iWidth+x)*3+0]; //Przepisanie s³adowej B
+	//		pRGBDsrSample[(y*iWidth+x)*3+1] = pRGBSrcSample[(y*iWidth+x)*3+1]; //Przepisanie s³adowej G
+	//		pRGBDsrSample[(y*iWidth+x)*3+2] = pRGBSrcSample[(y*iWidth+x)*3+2]; //Przepisanie s³adowej R
 
-		}
-	}
+	//	}
+	//}
 
 	for(int i=0; i<iHeight;i++)
 	{
 		for(int j=0; j<iWidth;j++)
 		{
 
-			g_last[(i*iWidth+j)*3+0] = pRGBDsrSample[(i*iWidth+j)*3+0];
-			g_last[(i*iWidth+j)*3+1] = pRGBDsrSample[(i*iWidth+j)*3+1];
-			g_last[(i*iWidth+j)*3+2] = pRGBDsrSample[(i*iWidth+j)*3+2];
+			g_last[(i*iWidth+j)*3+0] = pRGBSrcSample[(i*iWidth+j)*3+0];
+			g_last[(i*iWidth+j)*3+1] = pRGBSrcSample[(i*iWidth+j)*3+1];
+			g_last[(i*iWidth+j)*3+2] = pRGBSrcSample[(i*iWidth+j)*3+2];
 
 
 			//maska
 			if(maskSize && i>maskSize && j>maskSize && j<iWidth-maskSize && i<iHeight-maskSize)
-				maskF(i,j,iWidth,iHeight,pRGBDsrSample);
+				maskF(i,j,iWidth,iHeight,pRGBSrcSample);
 
 
 
@@ -417,7 +418,7 @@ void median_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsr
 				
 		temp/=2;
 		temp++;
-
+	
 		g_last[(i*iWidth+j)*3+0] = median_filter_array_B[temp];
 		g_last[(i*iWidth+j)*3+1] = median_filter_array_G[temp];
 		g_last[(i*iWidth+j)*3+2] = median_filter_array_R[temp];
@@ -528,7 +529,6 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     static HWND textbox1;
 	static HWND textbox_msg;
 	HWND text;
-	HWND res_combobox;
 	HWND radioButton;
 
 	POINT punkt;
@@ -1077,10 +1077,6 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				normal_mode=false;
 				break;
 
-			case RES_LIST:
-
-				break;
-
 		
 			case ID_BACK:
 				back=true;
@@ -1207,7 +1203,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		delete g_colorDetection;
 
-
+		VI.stopDevice(0);
 
 
 		PostQuitMessage(0);
