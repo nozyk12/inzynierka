@@ -65,8 +65,8 @@ HBRUSH brush = CreateSolidBrush(RGB(255,0,0));
 
 
 //przyciski
-int butW=120;		//szerokosc przycisku
-int butH=30;	//wysokosc przycisku
+const int butW=140;		//szerokosc przycisku
+const int butH=40;	//wysokosc przycisku
 
 //void DrawSq(HWND hwnd, int iWidth, int iHeight);		//funkcja rysujaca kwadrat w miejscu pobierania probek
 void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample );
@@ -172,7 +172,7 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 								g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
 							}
 
-							RGB_range_active=false;
+					RGB_range_active=false;
 				}
 
 				if(YUV_range_active)
@@ -191,9 +191,9 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 						V_up=temp;
 					}
 					
-					for(double y=Y_low; y<=Y_up; y+=1)
-						for(double u=U_low; u<=U_up; u+=1)
-							for(double v=V_low; v<=V_up; v+=1)
+					for(double y=Y_low; y<=Y_up; y+=.5)
+						for(double u=U_low; u<=U_up; u+=.5)
+							for(double v=V_low; v<=V_up; v+=.5)
 								g_colorDetection[(unsigned char)y][(unsigned char)u][(unsigned char)v] += 1;
 
 
@@ -251,7 +251,7 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 
 				if(own_function_array[j][i]==1)
 				{	
-					median_filter(i,j,iWidth,iHeight,pRGBDsrSample, median_filter_size);	
+					median_filter(i,j,iWidth,iHeight,pRGBSrcSample, median_filter_size);	
 				}
 			}
 
@@ -336,7 +336,7 @@ void ResetHistogram(int iHeight, int iWidth)
 
 }	 
 
-//! maska usredniajaca
+//! maska filtru usredniajacego
 void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample )	
 {
 	if(maskSize && i>maskSize && j>maskSize && j<iWidth-maskSize && i<iHeight-maskSize)
@@ -553,64 +553,65 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		
 		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Add pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,20,butW,butH,hwnd,(HMENU)GRINBOX_ADD_PATTERN_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		//hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Detect Mode"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,55,butW,butH,hwnd,(HMENU)GRINBOX_DETECT_BUTTON,GetModuleHandle(NULL),NULL);   ////////////
-		//hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Get Frame"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,120,butW,butH,hwnd,(HMENU)GRINBOX_GETFRAME_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset all"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,90,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Delete pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,55,butW,butH,hwnd,(HMENU)GRINBOX_DELETE_PATTERN_BUTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Delete pattern"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,70,butW,butH,hwnd,(HMENU)GRINBOX_DELETE_PATTERN_BUTON,GetModuleHandle(NULL),NULL);  ///////////
 
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Own function"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+160,20,butW,butH,hwnd,(HMENU)GRINBOX_OWN_FUNCT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Own function"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+180,20,butW,butH,hwnd,(HMENU)GRINBOX_OWN_FUNCT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reset all"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+180,70,butW,butH,hwnd,(HMENU)GRINBOX_RESET_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-		textbox_msg =  CreateWindow("static","Mode:", WS_CHILD | WS_VISIBLE | SS_CENTER | WS_BORDER ,g_iWidth+20,155,120,40,hwnd,(HMENU)TEXTBOX_MSG,GetModuleHandle(NULL),NULL);
+		textbox_msg =  CreateWindow("static","Mode:", WS_CHILD | WS_VISIBLE | SS_CENTER | WS_BORDER ,g_iWidth+20,120,300,40,hwnd,(HMENU)TEXTBOX_MSG,GetModuleHandle(NULL),NULL);
 
-		text=		CreateWindow(TEXT("static"),TEXT("Tools:\n~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,210,butW,30,hwnd,0,0,0);
+		text=		CreateWindow(TEXT("static"),TEXT("Tools:\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,210,300,30,hwnd,0,0,0);
 
-		text=		CreateWindow(TEXT("static"),TEXT("Frame size"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,250,butW,20,hwnd,0,0,0);
-		textbox =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,272,butW,20,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
+		text=		CreateWindow(TEXT("static"),TEXT("Frame size"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,250,butW,25,hwnd,0,0,0);
+		textbox =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,275,butW,20,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
 
-		text=		CreateWindow(TEXT("static"),TEXT("Increase range"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,295,butW,20,hwnd,0,0,0);
-		textbox1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,317,butW,20,hwnd,(HMENU)TEXTBOX_RANGE,GetModuleHandle(NULL),NULL);
+		text=		CreateWindow(TEXT("static"),TEXT("Increase range"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,303,butW,25,hwnd,0,0,0);
+		textbox1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,328,butW,20,hwnd,(HMENU)TEXTBOX_RANGE,GetModuleHandle(NULL),NULL);
 
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save changes"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,344, butW,butH,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save changes"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,360, butW,butH,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
 
 
 
-		text=		CreateWindow(TEXT("static"),TEXT("Display Mode:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,390,butW,20,hwnd,0,0,0);
-		radioButton = CreateWindow(TEXT("BUTTON"),TEXT("Normal"),BS_AUTORADIOBUTTON | WS_GROUP |BS_FLAT | WS_VISIBLE | WS_CHILD  ,g_iWidth+20,410,butW,butH,hwnd,(HMENU)NORMAL_MODE,GetModuleHandle(NULL),NULL);  ///////////		
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reverse"),BS_AUTORADIOBUTTON | BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,440,butW,butH,hwnd,(HMENU)REVERSE_MODE,GetModuleHandle(NULL),NULL);  ///////////
+		text=		CreateWindow(TEXT("static"),TEXT("Display Mode:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+180,250,butW,20,hwnd,0,0,0);
+		radioButton = CreateWindow(TEXT("BUTTON"),TEXT("Normal"),BS_AUTORADIOBUTTON | WS_GROUP |BS_FLAT | WS_VISIBLE | WS_CHILD  ,g_iWidth+180,270,butW,butH,hwnd,(HMENU)NORMAL_MODE,GetModuleHandle(NULL),NULL);  ///////////		
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Reverse"),BS_AUTORADIOBUTTON | BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+180,310,butW,butH,hwnd,(HMENU)REVERSE_MODE,GetModuleHandle(NULL),NULL);  ///////////
 		SendMessage(radioButton, BM_SETCHECK, BST_CHECKED, 0);
 
-		 text=		CreateWindow(TEXT("static"),TEXT("RGB range:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,475,butW,20,hwnd,0,0,0);
+		 text=		CreateWindow(TEXT("static"),TEXT("RGB range:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,425,118,20,hwnd,0,0,0);
 
-		 R1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,500,38,20,hwnd,(HMENU)R1_EDIT,GetModuleHandle(NULL),NULL);
-		 G1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+60,500,38,20,hwnd,(HMENU)G1_EDIT,GetModuleHandle(NULL),NULL);
-		 B1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+100,500,38,20,hwnd,(HMENU)B1_EDIT,GetModuleHandle(NULL),NULL);
+		 R1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,450,38,20,hwnd,(HMENU)R1_EDIT,GetModuleHandle(NULL),NULL);
+		 G1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+60,450,38,20,hwnd,(HMENU)G1_EDIT,GetModuleHandle(NULL),NULL);
+		 B1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+100,450,38,20,hwnd,(HMENU)B1_EDIT,GetModuleHandle(NULL),NULL);
 
-		 R2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,525,38,20,hwnd,(HMENU)R2_EDIT,GetModuleHandle(NULL),NULL);
-		 G2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+60,525,38,20,hwnd,(HMENU)G2_EDIT,GetModuleHandle(NULL),NULL);
-		 B2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+100,525,38,20,hwnd,(HMENU)B2_EDIT,GetModuleHandle(NULL),NULL);
+		 R2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+20,475,38,20,hwnd,(HMENU)R2_EDIT,GetModuleHandle(NULL),NULL);
+		 G2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+60,475,38,20,hwnd,(HMENU)G2_EDIT,GetModuleHandle(NULL),NULL);
+		 B2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+100,475,38,20,hwnd,(HMENU)B2_EDIT,GetModuleHandle(NULL),NULL);
 
-		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save RGB range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,550, butW,butH,hwnd,(HMENU)RGB_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save RGB range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,500, 118,butH,hwnd,(HMENU)RGB_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-		 text=		CreateWindow(TEXT("static"),TEXT("YUV range:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+160,475,154,20,hwnd,0,0,0);
+		 text=		CreateWindow(TEXT("static"),TEXT("Low"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+140,450,30,20,hwnd,0,0,0);
+		 text=		CreateWindow(TEXT("static"),TEXT("High"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+140,475,30,20,hwnd,0,0,0);
 
-		 Y1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+160,500,50,20,hwnd,(HMENU)Y1_EDIT,GetModuleHandle(NULL),NULL);
-		 U1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+212,500,50,20,hwnd,(HMENU)U1_EDIT,GetModuleHandle(NULL),NULL);
-		 V1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+264,500,50,20,hwnd,(HMENU)V1_EDIT,GetModuleHandle(NULL),NULL);
+		 text=		CreateWindow(TEXT("static"),TEXT("YUV range:"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+170,425,154,20,hwnd,0,0,0);
 
-		 Y2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+160,525,50,20,hwnd,(HMENU)Y2_EDIT,GetModuleHandle(NULL),NULL);
-		 U2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+212,525,50,20,hwnd,(HMENU)U2_EDIT,GetModuleHandle(NULL),NULL);
-		 V2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+264,525,50,20,hwnd,(HMENU)V2_EDIT,GetModuleHandle(NULL),NULL);
+		 Y1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+170,450,50,20,hwnd,(HMENU)Y1_EDIT,GetModuleHandle(NULL),NULL);
+		 U1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+222,450,50,20,hwnd,(HMENU)U1_EDIT,GetModuleHandle(NULL),NULL);
+		 V1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+274,450,50,20,hwnd,(HMENU)V1_EDIT,GetModuleHandle(NULL),NULL);
 
-		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save YUV range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+160,550, 154,butH,hwnd,(HMENU)YUV_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		 Y2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+170,475,50,20,hwnd,(HMENU)Y2_EDIT,GetModuleHandle(NULL),NULL);
+		 U2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+222,475,50,20,hwnd,(HMENU)U2_EDIT,GetModuleHandle(NULL),NULL);
+		 V2 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER ,g_iWidth+274,475,50,20,hwnd,(HMENU)V2_EDIT,GetModuleHandle(NULL),NULL);
+
+		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save YUV range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+170,500, 154,butH,hwnd,(HMENU)YUV_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
 		//text=		CreateWindow(TEXT("static"),TEXT("Settings:\n~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-220,butW,30,hwnd,0,0,0);
 	//	text=		CreateWindow(TEXT("static"),TEXT("Camera resolution"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-180,butW,18,hwnd,0,0,0);
 		//res_combobox = CreateWindowEx(WS_EX_CLIENTEDGE,"COMBOBOX","Resolution",WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST,g_iWidth+20,g_iHeight-160,butW,80,hwnd,(HMENU)RES_LIST,GetModuleHandle(NULL),NULL);
 		
 
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Load background"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-100,butW,butH,hwnd,(HMENU)LOADBACK_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Load background"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,butW,butH,hwnd,(HMENU)LOADBACK_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,butW,butH,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+180,g_iHeight-60,butW,butH,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
 
 
@@ -841,6 +842,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				g_bIsCalibrating=true;
 				RGB_range_active=true;
+				
 
 
 				y11=0.299*R_low+0.587*G_low+0.114*B_low;
@@ -915,7 +917,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				GetWindowText(GetDlgItem(hwnd, U1_EDIT), szInput2, 10);
 				U_low=atof(szInput2);
-		/*		if(U_low<-128)
+				if(U_low<-128)
 				{
 					U_low=-128;
 					setTextBoxDOUBLE(U_low,U1);
@@ -925,11 +927,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					U_low=127;
 					setTextBoxDOUBLE(U_low,U1);
 				}
-				*/
+				
 					
 				GetWindowText(GetDlgItem(hwnd, U2_EDIT), szInput2, 10);
 				U_up=atof(szInput2);
-			/*	if(U_up<-128)
+				if(U_up<-128)
 				{
 					U_up=-128;
 					setTextBoxDOUBLE(U_up,U2);
@@ -939,10 +941,10 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					U_up=127;
 					setTextBoxDOUBLE(U_up,U2);
 				}
-				*/
+				
 				GetWindowText(GetDlgItem(hwnd, V1_EDIT), szInput2, 10);
 				V_low=atof(szInput2);
-		/*		if(V_low<-128)
+				if(V_low<-128)
 				{
 					V_low=-128;
 					setTextBoxDOUBLE(V_low,V1);
@@ -951,11 +953,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					V_low=127;
 					setTextBoxDOUBLE(U_low,V1);
-				}*/
+				}
 					
 				GetWindowText(GetDlgItem(hwnd, V2_EDIT), szInput2, 10);
 				V_up=atof(szInput2);
-			/*	if(V_up<-128)
+				if(V_up<-128)
 				{
 					V_up=-128;
 					setTextBoxDOUBLE(V_up,V2);
@@ -964,11 +966,12 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					V_up=127;
 					setTextBoxDOUBLE(V_up,V2);
-				}*/
+				}
 
 
 				g_bIsCalibrating=true;
 				YUV_range_active=true;
+			
 
 
 				r11=Y_low + (V_low/0.877);
@@ -1131,7 +1134,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case ID_MENU_ABOUT:
-				MessageBox(0,TEXT("Coded by\nMarcin No¿yñski \nversion 0.95.1023-2 RC"),TEXT("About"),MB_OK);
+				MessageBox(0,TEXT("Coded by Marcin No¿yñski\nPoznan University of Technology\nFaculty of Electronics and Telecommunications\nEngineering Thesis, 2014"),TEXT("About"),MB_OK);
 				break;
 
 			case LOADBACK_BUTTON:
@@ -1227,7 +1230,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine
 	wc.hInstance = hInstance;
 	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(GRINBOX_MAIN_ICON));
 	wc.hCursor = NULL;//LoadCursor(NULL, IDC_HAND);
-	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1); //CreateSolidBrush(RGB(100, 100, 100));  
 	wc.lpszMenuName = MAKEINTRESOURCE(GRINBOX_MAIN_MENU);
 	wc.lpszClassName = GRINBOX_APP_CLASS_NAME;
 

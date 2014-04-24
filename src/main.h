@@ -2,9 +2,6 @@
 #define __GRINBOX_MAIN_H__
 
 #include <windows.h>
-#include <string>
-#include <stdlib.h>
-#include <fstream>
 #include <algorithm>
 
 
@@ -50,7 +47,7 @@
 
 #define GRINBOX_APP_CLASS_NAME TEXT("GrinboxAppClass")
 
-#define GRINBOX_APP_WINDOW_NAME TEXT("GrinboxAppWindow")
+#define GRINBOX_APP_WINDOW_NAME TEXT("Grinbox")
 
 #define GRINBOX_MAIN_MENU 102
 

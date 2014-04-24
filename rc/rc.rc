@@ -20,9 +20,7 @@ GRINBOX_MAIN_ICON       ICON                    "icon1.ico"
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
-
-
-
+//
 
 GRINBOX_MAIN_MENU MENU
 BEGIN
@@ -39,10 +37,10 @@ BEGIN
         MENUITEM "Combined",                    ID_COMB, CHECKED
         MENUITEM "Mask",                        ID_FILTERED
     END
-    POPUP "&Mask"
+    POPUP "&Low-pass filter"
     BEGIN
         MENUITEM "Off",                         ID_MASK_OFF, CHECKED
-        MENUITEM "3x3",                         ID_MASK_3
+        MENUITEM "3x3 Mask",                    ID_MASK_3
     END
     POPUP "&Help"
     BEGIN
