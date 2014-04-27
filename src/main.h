@@ -3,8 +3,8 @@
 
 #include <windows.h>
 #include <algorithm>
-
-
+#include <math.h>
+#include <cmath>
 
 #define GRINBOX_MAIN_ICON 101
 #define GRINBOX_ID_TIMER_GET_FRAME 501

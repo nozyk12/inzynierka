@@ -1,7 +1,7 @@
 #include "main.h"
 #include <videoInput.h>
 
-#pragma optimize("", on)
+
 
 HINSTANCE hInst;
 
@@ -14,33 +14,33 @@ unsigned char *g_temp;
 
 unsigned int ***g_colorDetection;
 
-bool own_function_array[1280][720]={};
-
+bool own_function_array[1920][1080]={};
 bool g_bIsCalibrating;
 bool g_bIsGetFrame;
-
-int g_iWidth;						// rozdzielczosc kamery
-int g_iHeight;						// rozdzielczosc kamery
 int g_iCalibFrameSize =30;			//rozmiar ramki pobieraj¹cej próbki
-int bonusPix=0;						//dodatkowe pixele, pod ktore jest podstawiane tlo
-int combobox_index;
 int inc_range=3;
-const int median_filter_size=1;			// rozmiar filtru medianowego
+const int median_filter_size=2;			// rozmiar filtru medianowego
 
 bool RGB_range_active = false;
 bool YUV_range_active = false;
 bool own_function=false;
+
+int g_iWidth=800;						// rozdzielczosc kamery
+int g_iHeight=600;						// rozdzielczosc kamery
+bool default_resolution= true;			// jesli true to program ustawi najwieszka dostepna rozdzielczosc kamery.
+										// jesli false to pobierze rozdzielczosc ze zmiennych g_iWidth i g_iHeight	
 
 int median_filter_array_R[(2*median_filter_size+1)*(2*median_filter_size+1)];
 int median_filter_array_G[(2*median_filter_size+1)*(2*median_filter_size+1)];
 int median_filter_array_B[(2*median_filter_size+1)*(2*median_filter_size+1)];
 
 
-
-int R_low, G_low, B_low, R_up, G_up, B_up;
-double Y_low, U_low, V_low, Y_up, U_up, V_up;
-double y11,u11,v11,y22,u22,v22;
-int r11,g11,b11,r22,g22,b22;
+int R,G,B;
+double Y,U,V;
+int R_low, G_low, B_low, R_up, G_up, B_up;				//
+float Y_low, U_low, V_low, Y_up, U_up, V_up;			// pomocnicze zmienne do wykorzystania w textbox.
+float y11,u11,v11,y22,u22,v22;							//
+int r11,g11,b11,r22,g22,b22;							//
 
 
 unsigned char *g_pRGBBack;
@@ -55,8 +55,8 @@ bool normal_mode=true;
 bool delete_pattern=false;
 bool add_patter=true;
 
-int maskSize=0;		
-int mask=1;
+int maskSize=0;		//filtr dolnoprzepustowy domyslnie wylaczony
+int mask=1;			
 
 
 int mouseX;
@@ -69,7 +69,10 @@ const int butW=140;		//szerokosc przycisku
 const int butH=40;	//wysokosc przycisku
 
 //void DrawSq(HWND hwnd, int iWidth, int iHeight);		//funkcja rysujaca kwadrat w miejscu pobierania probek
-void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample );
+void low_pass_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample );
+
+float roundToNear(float number);		//funkcja, ktora zaokragla do najbliszej liczby calkowitej
+float round(float f,float pres);		//zaokragla do okreslonego miejsca po przecinku
 
 
 void median_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample, int n );
@@ -87,19 +90,6 @@ unsigned char* ReadPpmFromFile(char* szFileName,int &riWidth, int &riHeight);
 void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSample,int iWidth, int iHeight)
 {
 
-
-
-	//for(int y=0;y<iHeight;y++) //Pêtla po wszystkich wierszach obrazu
-	//{
-	//	for(int x=0;x<iWidth;x++) //Pêtla po wszystkich kolumnach obrazu
-	//	{
-	//		pRGBDsrSample[(y*iWidth+x)*3+0] = pRGBSrcSample[(y*iWidth+x)*3+0]; //Przepisanie s³adowej B
-	//		pRGBDsrSample[(y*iWidth+x)*3+1] = pRGBSrcSample[(y*iWidth+x)*3+1]; //Przepisanie s³adowej G
-	//		pRGBDsrSample[(y*iWidth+x)*3+2] = pRGBSrcSample[(y*iWidth+x)*3+2]; //Przepisanie s³adowej R
-
-	//	}
-	//}
-
 	for(int i=0; i<iHeight;i++)
 	{
 		for(int j=0; j<iWidth;j++)
@@ -112,17 +102,25 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 
 			//maska
 			if(maskSize && i>maskSize && j>maskSize && j<iWidth-maskSize && i<iHeight-maskSize)
-				maskF(i,j,iWidth,iHeight,pRGBSrcSample);
+				low_pass_filter(i,j,iWidth,iHeight,pRGBSrcSample);
 
 
+			if(!maskSize)
+			{
+				R = g_last[(i*iWidth+j)*3+2];
+				G = g_last[(i*iWidth+j)*3+1];
+				B = g_last[(i*iWidth+j)*3+0];
+			}
+			else
+			{
+				R = g_temp[(i*iWidth+j)*3+2];
+				G = g_temp[(i*iWidth+j)*3+1];
+				B = g_temp[(i*iWidth+j)*3+0];
+			}
 
-			int R = g_last[(i*iWidth+j)*3+2];
-			int G = g_last[(i*iWidth+j)*3+1];
-			int B = g_last[(i*iWidth+j)*3+0];
-
-			float Y = 0.299f*R+0.587f*G+0.114f*B;
-			float U = -0.147f*R-0.289f*G+0.437f*B;
-			float V = 0.615f*R-0.515f*G+0.100f*B;
+			Y =  0.299f*R  + 0.587f*G + 0.114f*B;
+			U = -0.147f*R  - 0.289f*G + 0.437f*B;
+			V =  0.615f*R  - 0.515f*G - 0.100f*B;
 
 
 			if(g_bIsCalibrating)
@@ -166,9 +164,9 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 						for(int g=G_low; g<=G_up; g++)
 							for(int b=B_low; b<=B_up; b++)
 							{
-								float Y = 0.299f*r+0.587f*g+0.114f*b;
-								float U = -0.147f*r-0.289f*g+0.437f*b;
-								float V = 0.615f*r-0.515f*g+0.100f*b;
+								Y =  0.299*r + 0.587*g + 0.114*b;
+								U = -0.147*r - 0.289*g + 0.437*b;
+								V =  0.615*r - 0.515*g - 0.100*b;
 								g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V] += 1;
 							}
 
@@ -179,61 +177,49 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 				{
 					if(U_low>U_up)
 					{
-						int temp=U_low;
+						float temp=U_low;
 						U_low=U_up;
 						U_up=temp;
 					}
 
 					if(V_low>V_up)
 					{
-						int temp=V_low;
+						float temp=V_low;
 						V_low=V_up;
 						V_up=temp;
 					}
 					
-					for(double y=Y_low; y<=Y_up; y+=.5)
-						for(double u=U_low; u<=U_up; u+=.5)
-							for(double v=V_low; v<=V_up; v+=.5)
+					for(double y=Y_low; y<=Y_up; y+=0.25)
+						for(double u=U_low; u<=U_up; u+=0.25)
+							for(double v=V_low; v<=V_up; v+=0.25)
 								g_colorDetection[(unsigned char)y][(unsigned char)u][(unsigned char)v] += 1;
 
 
 					YUV_range_active=false;
 				}
-
-									
+				
+								
 									
 
 				if(normal_mode==true)		//tryb normal
 				{
 					if(g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V]>1 )
-
-						for(int g=i-bonusPix; g<=i+bonusPix; g++)
-							for(int h=j-bonusPix; h<=j+bonusPix; h++)
-							{
-								if(h>0 && h<iWidth && g>0 && g<iHeight)
-								{
-									g_last[(g*iWidth+h)*3+0] = g_pRGBBack[(g*g_iBackWidth+h)*3+0]; //0;
-									g_last[(g*iWidth+h)*3+1] = g_pRGBBack[(g*g_iBackWidth+h)*3+1]; // 0;
-									g_last[(g*iWidth+h)*3+2] = g_pRGBBack[(g*g_iBackWidth+h)*3+2]; //0;
-								}
-							}
-							
+					{
+						g_last[(i*iWidth+j)*3+0] = g_pRGBBack[(i*g_iBackWidth+j)*3+0]; 
+						g_last[(i*iWidth+j)*3+1] = g_pRGBBack[(i*g_iBackWidth+j)*3+1]; 
+						g_last[(i*iWidth+j)*3+2] = g_pRGBBack[(i*g_iBackWidth+j)*3+2]; 
+					}
 
 				}
 				else            //tryb reverse
 				{
 					if(g_colorDetection[(unsigned char)Y][(unsigned char)U][(unsigned char)V]<1 )
-						for(int g=i-bonusPix; g<=i+bonusPix; g++)
-							for(int h=j-bonusPix; h<=j+bonusPix; h++)
-							{
-								if(h>0 && h<iWidth && g>0 && g<iHeight)
-								{
-									g_last[(g*iWidth+h)*3+0] = g_pRGBBack[(g*g_iBackWidth+h)*3+0]; //0;
-									g_last[(g*iWidth+h)*3+1] = g_pRGBBack[(g*g_iBackWidth+h)*3+1]; // 0;
-									g_last[(g*iWidth+h)*3+2] = g_pRGBBack[(g*g_iBackWidth+h)*3+2]; //0;
-								}
-							}
-
+					{
+						g_last[(i*iWidth+j)*3+0] = g_pRGBBack[(i*g_iBackWidth+j)*3+0]; 
+						g_last[(i*iWidth+j)*3+1] = g_pRGBBack[(i*g_iBackWidth+j)*3+1]; 
+						g_last[(i*iWidth+j)*3+2] = g_pRGBBack[(i*g_iBackWidth+j)*3+2]; 
+					}
+							
 				}
 
 
@@ -268,51 +254,6 @@ void DoSomeThingWithSample(unsigned char* pRGBSrcSample,unsigned char* pRGBDsrSa
 
 
 
-void xEndCalibrate()
-{
-	unsigned int **ppHist;
-	int iMax = 0;
-
-	//Allokacje Pamieci
-	ppHist = new unsigned int*[256];
-	for(int i=0;i<256;i++)
-	{
-		ppHist[i] = new unsigned int[256];
-	}
-
-	//Normalize Histogram
-	for(int i=0;i<256;i++)
-	{
-		for(int j=0;j<256;j++)
-		{
-			ppHist[i][j] = 0;
-			for(int k=0;k<256;k++)
-			{
-				ppHist[i][j] += g_colorDetection[k][i][j];
-			}
-			if(iMax<ppHist[i][j]) iMax = ppHist[i][j];
-		}
-	}
-
-	//Create Histogram for display
-	/*for(int i=0;i<256;i++)
-	{
-	for(int j=0;j<256;j++)
-	{
-	g_pRGBHistogramSample[(i*256+j)*3+0] = ppHist[i][j]*256/iMax;
-	g_pRGBHistogramSample[(i*256+j)*3+1] = ppHist[i][j]*256/iMax;
-	g_pRGBHistogramSample[(i*256+j)*3+2] = ppHist[i][j]*256/iMax;
-	}
-	} 
-	*/
-	//Deallokacje Pamieci
-	for(int i=0;i<256;i++)
-	{
-		delete ppHist[i];
-	}
-	delete ppHist;
-
-}
 
 
 //! reset pobranych probek, umozliwia pobranie nowych
@@ -333,11 +274,10 @@ void ResetHistogram(int iHeight, int iWidth)
 			own_function_array[j][i]=0;
 		
 
-
 }	 
 
 //! maska filtru usredniajacego
-void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample )	
+void low_pass_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample )	
 {
 	if(maskSize && i>maskSize && j>maskSize && j<iWidth-maskSize && i<iHeight-maskSize)
 	{
@@ -357,9 +297,6 @@ void maskF(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsrSample )
 				}
 			}
 		}
-
-
-
 	}
 }
 
@@ -428,22 +365,33 @@ void median_filter(int i, int j, int iWidth, int iHeight, unsigned char* pRGBDsr
 
 
 
+float roundToNear(float number)
+{
+    return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
+	
+}
 
-
+float round(float f,float pres)			
+{
+    return (float) (floor(f*(1.0f/pres) + 0.5)/(1.0f/pres));
+}
 
 
 
 void xInitCamera( int iDevice, int &width, int &height)
 {
-	//int width,height,
-	int size;
-	VI.setupDevice(iDevice); // 
-
-	width = VI.getWidth(iDevice);
-	height = VI.getHeight(iDevice);
-
-
-	size = VI.getSize(iDevice); // size to initialize `
+	
+	
+	if(default_resolution==true)
+	{
+		VI.setupDevice(iDevice);
+		width = VI.getWidth(iDevice);
+		height = VI.getHeight(iDevice);
+	}
+	else
+	{
+		VI.setupDevice(iDevice,width,height);
+	}
 
 }
 
@@ -562,10 +510,10 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		text=		CreateWindow(TEXT("static"),TEXT("Tools:\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,210,300,30,hwnd,0,0,0);
 
-		text=		CreateWindow(TEXT("static"),TEXT("Frame size"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,250,butW,25,hwnd,0,0,0);
+		text=		CreateWindow(TEXT("static"),TEXT("Frame size ( >= 0)"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,250,butW,25,hwnd,0,0,0);
 		textbox =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,275,butW,20,hwnd,(HMENU)TEXTBOX_FRAMESIZE,GetModuleHandle(NULL),NULL);
 
-		text=		CreateWindow(TEXT("static"),TEXT("Increase range"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,303,butW,25,hwnd,0,0,0);
+		text=		CreateWindow(TEXT("static"),TEXT("Increase range (0-20)"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,303,butW,25,hwnd,0,0,0);
 		textbox1 =    CreateWindow("EDIT","", WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_LEFT | WS_BORDER  ,g_iWidth+20,328,butW,20,hwnd,(HMENU)TEXTBOX_RANGE,GetModuleHandle(NULL),NULL);
 
 		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save changes"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,360, butW,butH,hwnd,(HMENU)GRINBOX_SAVE,GetModuleHandle(NULL),NULL);  ///////////
@@ -604,38 +552,18 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Save YUV range"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+170,500, 154,butH,hwnd,(HMENU)YUV_RANGE_SAVE_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
-		//text=		CreateWindow(TEXT("static"),TEXT("Settings:\n~~~~~~~~~~~~~~~~~~~~~"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-220,butW,30,hwnd,0,0,0);
-	//	text=		CreateWindow(TEXT("static"),TEXT("Camera resolution"), SS_CENTER |WS_CHILD | WS_VISIBLE, g_iWidth+20,g_iHeight-180,butW,18,hwnd,0,0,0);
-		//res_combobox = CreateWindowEx(WS_EX_CLIENTEDGE,"COMBOBOX","Resolution",WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST,g_iWidth+20,g_iHeight-160,butW,80,hwnd,(HMENU)RES_LIST,GetModuleHandle(NULL),NULL);
-		
 
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Load background"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-60,butW,butH,hwnd,(HMENU)LOADBACK_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
-
-		hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+180,g_iHeight-60,butW,butH,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+ 		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Load background"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+20,g_iHeight-50,butW,butH,hwnd,(HMENU)LOADBACK_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
+		 
+		 hWndButton = CreateWindow(TEXT("BUTTON"),TEXT("Exit"),BS_FLAT | WS_VISIBLE | WS_CHILD,g_iWidth+180,g_iHeight-50,butW,butH,hwnd,(HMENU)GRINBOX_EXIT_BUTTON,GetModuleHandle(NULL),NULL);  ///////////
 
 
 
-		//i dodajemy kilka pozycji
-
-		//SendMessage(res_combobox, CB_ADDSTRING,0, (LPARAM)"640x480");		//0
-		//SendMessage(res_combobox, CB_ADDSTRING,0, (LPARAM)"1280x720");		//1
-		//SendMessage(res_combobox, CB_ADDSTRING,0, (LPARAM)"1920x1080");		//2
-
-		//SendMessage(res_combobox,CB_SETCURSEL,(WPARAM)1,0);			// domyslnie 1280x720
-		//combobox_index=SendMessage(res_combobox,CB_GETCURSEL,0,0);
 	
 		setTextBoxINT(g_iCalibFrameSize, textbox);		//wpisane wartosi do textboxa	
 		setTextBoxINT(inc_range, textbox1);	
 
-		/*	
-			SetWindowText(R1, "R low");	
-			SetWindowText(G1, "G low");	
-			SetWindowText(B1, "B low");	
-			SetWindowText(R2, "R up");	
-			SetWindowText(G2, "G up");	
-			SetWindowText(B2, "B up");	
-			*/
-
+	
 		//  ==================================================== koniec interfejsu ========================================================//
 
 
@@ -681,7 +609,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			xGetFrame( g_pRGBOriginalSample);  //Pobranie 1 ramki obrazu z kamery
 			DoSomeThingWithSample(g_pRGBOriginalSample,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Wywo³anie procedury przetwarzaj¹cej obraz
 
-			//  xDisplayBmpOnWindow(hwnd,0,0,g_pRGBProcesedSample,g_iWidth,g_iHeight); //Wyœwitlenie 1 ramki obrazu na okienku
+			
 			if (combined) xDisplayBmpOnWindow(hwnd,0,0,g_last,g_iWidth,g_iHeight); //Wyœwitlenie zmodyfikowanej ramki obrazu na okienku w innym miejscu
 			if (back)xDisplayBmpOnWindow(hwnd,0,0,g_pRGBBack,g_iWidth,g_iHeight); //Wyœwitlenie zmodyfikowanej ramki obrazu na okienku w innym miejscu
 			if (cam) xDisplayBmpOnWindow(hwnd,0,0,g_pRGBOriginalSample,g_iWidth,g_iHeight); //Wyœwitlenie zmodyfikowanej ramki obrazu na okienku w innym miejscu
@@ -721,8 +649,11 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 			if(GET_WHEEL_DELTA_WPARAM(wParam)<0)
 			{
-				g_iCalibFrameSize-=5;
-				setTextBoxINT(g_iCalibFrameSize, textbox);		//wpisane wartosci do textboxa	
+				if(g_iCalibFrameSize>=5)
+				{
+					g_iCalibFrameSize-=5;
+					setTextBoxINT(g_iCalibFrameSize, textbox);		//wpisane wartosci do textboxa
+				}
 			}
 			else
 			{
@@ -742,9 +673,26 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				char szInput[10];					// czytanie z textbox
 				GetWindowText(GetDlgItem(hwnd, TEXTBOX_FRAMESIZE), szInput, 10);
+				if(atoi(szInput)<0)
+				{
+					g_iCalibFrameSize=0;
+					setTextBoxINT(g_iCalibFrameSize, textbox);
+				}
+				else
 				g_iCalibFrameSize=atoi(szInput);
 					
 				GetWindowText(GetDlgItem(hwnd, TEXTBOX_RANGE), szInput, 10);
+				if(atoi(szInput)<0)
+				{
+					inc_range=0;
+					setTextBoxINT(inc_range, textbox1);
+				}
+				else if(atoi(szInput)>20)
+				{
+					inc_range=20;
+					setTextBoxINT(inc_range, textbox1);
+				}
+				else
 				inc_range=atoi(szInput);
 
 				break;
@@ -845,13 +793,13 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 
 
-				y11=0.299*R_low+0.587*G_low+0.114*B_low;
-			    u11=-0.147*R_low-0.289*G_low+0.436*B_low;
-				v11=0.615*R_low-0.515*G_low+0.100*B_low;
+				y11=(0.299*R_low+0.587*G_low+0.114*B_low);
+			    u11=(-0.147*R_low-0.289*G_low+0.436*B_low);
+				v11=(0.615*R_low-0.515*G_low-0.100*B_low);
 
-				y22=0.299*R_up+0.587*G_up+0.114*B_up;
-				u22=-0.147*R_up-0.289*G_up+0.436*B_up;
-				v22=0.615*R_up-0.515*G_up+0.100*B_up;
+				y22=(0.299*R_up+0.587*G_up+0.114*B_up);
+				u22=-(0.147*R_up-0.289*G_up+0.436*B_up);
+				v22=(0.615*R_up-0.515*G_up-0.100*B_up);
 
 
 				if(y11<0)  y11=0;
@@ -974,13 +922,13 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			
 
 
-				r11=Y_low + (V_low/0.877);
-				g11=Y_low- 0.395*U_low - 0.581 * V_low;
-				b11=Y_low + (U_low/0.492);
+				r11=(Y_low + (V_low/0.877));
+				g11=(Y_low- 0.395*U_low - 0.581 * V_low);
+				b11=(Y_low + (U_low/0.492));
 
-				r22=Y_up + (V_up/0.877);
-				g22=Y_up- 0.395*U_up - 0.581 * V_up;
-				b22=Y_up + (U_up/0.492);
+				r22=(Y_up + (V_up/0.877));
+				g22=(Y_up- 0.395*U_up - 0.581 * V_up);
+				b22=(Y_up + (U_up/0.492));
 
 
 				if(r11<0) r11=0;
@@ -1012,7 +960,6 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case GRINBOX_ADD_PATTERN_BUTTON:
-				//MessageBox(0,TEXT("Before calibrate load a background image!"),TEXT("Load image"),MB_OK);
 				g_bIsCalibrating = true;
 				CheckMenuItem(GetMenu(hwnd),ID_BACK,MF_UNCHECKED);
 				CheckMenuItem(GetMenu(hwnd),ID_CAM,MF_UNCHECKED);
@@ -1178,9 +1125,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					if(strstr(ofn.lpstrFile,".bmp"))	  
 						g_pRGBBack = ReadBmpFromFile(ofn.lpstrFile,g_iBackWidth, g_iBackHeight);
 
-					//					if(!strstr(ofn.lpstrFile,".bmp")&&!strstr(ofn.lpstrFile,".ppm"))
-					//					MessageBox(0,TEXT("Why ya clickin if not openin, dude?"),TEXT("WTF?"),MB_OK);
-
+			
 
 
 					break;
@@ -1237,10 +1182,10 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine
 	//Rejestracja klasy okna
 	if ( !RegisterClass( &wc ) ) return( FALSE );
 
+		
 	xInitCamera(0,g_iWidth,g_iHeight); //Aktjwacja pierwszej kamery do pobierania obrazu
 
 	
-
 
 	// Tworzenie g³ównego okna aplikacji
 	HWND hWnd = CreateWindow(

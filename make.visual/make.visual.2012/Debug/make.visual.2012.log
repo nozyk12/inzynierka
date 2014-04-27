@@ -1,20 +1,36 @@
-﻿Build started 2014-04-24 16:40:25.
+﻿Build started 2014-04-25 07:17:13.
      1>Project "C:\Users\Marcin\Documents\GitHub\inzynierka\make.visual\make.visual.2012\make.visual.2012.vcxproj" on node 2 (Build target(s)).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\Microsoft.CppBuild.targets(346,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
      1>ClCompile:
          D:\Pliki programów (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /I..\..\inc /ZI /nologo /W3 /WX- /Od /Ot /Oy- /D WIN32 /D _DEBUG /D _MBCS /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /FR"Debug\\" /Gd /TP /analyze- /errorReport:prompt ..\..\src\main.cpp
          main.cpp
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(182): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(189): warning C4244: 'initializing' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(293): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(503): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(138): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(139): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(140): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(146): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(147): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(148): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(370): warning C4244: 'return' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(451): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  d:\pliki programów (x86)\microsoft visual studio 11.0\vc\include\stdio.h(357) : see declaration of 'sprintf'
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(977): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(978): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(979): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(981): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(982): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
-     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(983): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(796): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(797): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(798): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(800): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(801): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(802): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(840): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(854): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(867): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(881): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(894): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(907): warning C4244: '=' : conversion from 'double' to 'float', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(925): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(926): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(927): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(929): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(930): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
+     1>c:\users\marcin\documents\github\inzynierka\src\main.cpp(931): warning C4244: '=' : conversion from 'double' to 'int', possible loss of data
        Link:
          D:\Pliki programów (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Marcin\Documents\GitHub\inzynierka\make.visual\..\bin\Grinbox.exe" /INCREMENTAL /NOLOGO /LIBPATH:..\..\lib videoInput2012d.lib videoInput2012.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Marcin\Documents\GitHub\inzynierka\make.visual\..\bin\Grinbox.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Marcin\Documents\GitHub\inzynierka\make.visual\..\bin\Grinbox.lib" /MACHINE:X86 Debug\rc.res
          Debug\LoadPict.obj
@@ -26,4 +42,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:03.97
+Time Elapsed 00:00:05.94
